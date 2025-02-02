@@ -1,0 +1,5 @@
+{
+    "openWebUIUrl": "https://ai.sadoway.ca",
+    "apiKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Ijk0ODE3ZWY1LTE2NGYtNGU5ZS04M2VmLTY5MDdhZTViYjdkZiJ9.yh_1x9wXldWOWtKQdDRaHC1vdtwrx5jyfhkamOpd1ms",
+    "selectedModel": "granite3.1-moe:1b-instruct-q6_K"
+  }
