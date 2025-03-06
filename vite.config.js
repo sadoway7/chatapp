@@ -7,12 +7,12 @@ export default defineConfig({
     host: '0.0.0.0',
     port: 4173,
     strictPort: true,
-    allowedHosts: ['l2.sadoway.ca']  // Replace with your domain
+    allowedHosts: ['chat.sadoway.ca']  // Replace with your domain
   },
   server: {
     host: '0.0.0.0',
     port: 4173,
     strictPort: true,
-    allowedHosts: ['l2.sadoway.ca']  // Replace with your domain
+    allowedHosts: ['chat.sadoway.ca']  // Replace with your domain
   }
 })

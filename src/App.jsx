@@ -131,7 +131,13 @@ function App() {
   const handleRetrySend = async (retryMessage) => {
     setIsTyping(true);
     try {
-      const response = await sendChatMessage(openWebUIUrl, apiKey, selectedModel, [{ role: 'user', content: retryMessage }]);
+      // Get message history up to the retry point
+      const messageHistory = messages.slice(0, -1); // Remove last assistant message
+      
+      // Add our retry prompt
+      const messagesWithRetry = [...messageHistory, { role: 'user', content: retryMessage }];
+      
+      const response = await sendChatMessage(openWebUIUrl, apiKey, selectedModel, messagesWithRetry);
       if (!response || !response.choices || !response.choices.length || !response.choices[0].message) {
         throw new Error('Invalid response format from API.');
       }
@@ -147,18 +153,25 @@ function App() {
   };
 
   const handleRetry = (index) => {
-    if (index > 0 && messages[index - 1].role === 'user') {
-      const originalMessage = messages[index - 1].content;
-      const retryMessage = `Acknowledge that your previous response wasn't satisfactory and provide a new, different response to the user's question. Take a different approach this time by:
-1. Using a different perspective or methodology
-2. Providing more specific examples or details
-3. Breaking down the explanation in a clearer way
-4. Being more direct and concise
-
-Important: Do not repeat content from your previous response. Focus on giving a fresh, alternative answer that might better address what the user is looking for.
-
-Original user message: ${originalMessage}`;
-      handleRetrySend(retryMessage)
+    // Find the most recent user message before this message
+    let userMessageIndex = index - 1;
+    while (userMessageIndex >= 0) {
+      if (messages[userMessageIndex].role === 'user') {
+        const originalMessage = messages[userMessageIndex].content;
+        const retryMessage = `Acknowledge that your previous response wasn't satisfactory and provide a new, different response to the user's question. Take a different approach this time by:
+  1. Using a different perspective or methodology
+  2. Providing more specific examples or details
+  3. Breaking down the explanation in a clearer way
+  4. Being more direct and concise
+  5. you may get this message again, you need to have a different responce each time
+  
+  Important: Do not repeat content from your previous response. Focus on giving a fresh, alternative answer that might better address what the user is looking for.
+  
+  Original user message: ${originalMessage}`;
+        handleRetrySend(retryMessage);
+        break;
+      }
+      userMessageIndex--;
     }
   };
 
