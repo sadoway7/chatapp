@@ -1,6 +1,6 @@
 import React from 'react';
 
-const Header = ({ handleClearChat }) => {
+const Header = ({ handleClearChat, isModelLoading, loadingModel }) => {
   return (
     <div className="chat-header">
       <div className="logo-container">
@@ -35,6 +35,15 @@ const Header = ({ handleClearChat }) => {
         </svg>
         <h2 className="logo-text">chat<span className="logo-dot">.</span>sadoway</h2>
       </div>
+      
+      {/* Add model loading indicator */}
+      {isModelLoading && (
+        <div className="model-loading-indicator">
+          <div className="loading-spinner"></div>
+          <span>Loading {loadingModel}...</span>
+        </div>
+      )}
+      
       <div className="header-buttons">
         <button className="clear-button" onClick={handleClearChat}>
           Clear

@@ -1,8 +1,8 @@
 import React from 'react';
-import { FiCopy, FiRefreshCw } from 'react-icons/fi';
+import { FiCopy, FiRefreshCw, FiSquare } from 'react-icons/fi';
 import { getSafeMessageContent } from '../utils/message.jsx';
 
-const ChatMessages = ({ messages, chatContainerRef, isTyping, handleRetry }) => {
+const ChatMessages = ({ messages, chatContainerRef, isTyping, handleRetry, handleStopGeneration }) => {
   const [showCopyMessage, setShowCopyMessage] = React.useState(false);
   // Add ref for the message container
   const copyMessageRef = React.useRef(null);
@@ -20,6 +20,51 @@ const ChatMessages = ({ messages, chatContainerRef, isTyping, handleRetry }) => 
     }
     return () => clearTimeout(timeoutId);
   }, [showCopyMessage]);
+  
+  // Add event listeners for code block copy buttons
+  React.useEffect(() => {
+    const handleCodeBlockCopy = (event) => {
+      // Check if the click was on a code block's ::after pseudo-element (copy button)
+      // We can approximate this by checking if the click is in the top-right corner of a pre element
+      if (event.target.tagName === 'PRE') {
+        const rect = event.target.getBoundingClientRect();
+        const isTopRightCorner =
+          event.clientX > rect.right - 50 &&
+          event.clientX < rect.right &&
+          event.clientY > rect.top &&
+          event.clientY < rect.top + 30;
+        
+        if (isTopRightCorner) {
+          // Find the code element inside the pre
+          const codeElement = event.target.querySelector('code');
+          if (codeElement) {
+            // Copy the text content
+            navigator.clipboard.writeText(codeElement.textContent)
+              .then(() => {
+                setShowCopyMessage(true);
+                console.log('Code copied to clipboard');
+              })
+              .catch(err => {
+                console.error('Failed to copy code:', err);
+              });
+          }
+        }
+      }
+    };
+    
+    // Add the event listener to the chat container
+    const chatContainer = chatContainerRef.current;
+    if (chatContainer) {
+      chatContainer.addEventListener('click', handleCodeBlockCopy);
+    }
+    
+    // Clean up
+    return () => {
+      if (chatContainer) {
+        chatContainer.removeEventListener('click', handleCodeBlockCopy);
+      }
+    };
+  }, [chatContainerRef]);
 
   const handleCopyMessage = (content) => {
     navigator.clipboard.writeText(content)
@@ -31,6 +76,8 @@ const ChatMessages = ({ messages, chatContainerRef, isTyping, handleRetry }) => 
         console.error('Failed to copy text:', err);
       });
   };
+  
+  // Function removed: handleCopyMarkdown
 
   return (
     <>
@@ -48,21 +95,25 @@ const ChatMessages = ({ messages, chatContainerRef, isTyping, handleRetry }) => 
             className={`message ${message.role === 'user' ? 'user-message' : 'assistant-message'} ${message.hasAttachment ? 'has-attachment' : ''}`}
             data-attachment-name={message.attachmentName || ''}
           >
-            <div className="message-content">{getSafeMessageContent(message.content)}</div>
-            {message.role === 'assistant' && typeof message.content === 'string' && (
+            <div className={`message-content ${!message.content.includes('\n') ? 'single-line' : ''} ${message.isStreaming ? 'streaming' : ''}`}>
+              {getSafeMessageContent(message.content, message.role === 'assistant')}
+            </div>
+            {message.role === 'assistant' && typeof message.content === 'string' && !message.isStreaming && (
               <div className="message-actions-container">
                 <div className="message-actions">
-                  <button 
-                    className="copy-button" 
+                  <button
+                    className="copy-button"
                     onClick={() => handleCopyMessage(message.content)}
                     aria-label="Copy message"
+                    title="Copy text"
                   >
                     <FiCopy />
                   </button>
-                  <button 
-                    className="retry-button" 
+                  <button
+                    className="retry-button"
                     onClick={() => handleRetry(index)}
                     aria-label="Retry message"
+                    title="Regenerate response"
                   >
                     <FiRefreshCw />
                   </button>

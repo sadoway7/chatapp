@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { FiSquare } from 'react-icons/fi';
 import Header from './components/Header';
 import ChatInput from './components/ChatInput';
 import ChatMessages from './components/ChatMessages';
 import SettingsModal from './components/SettingsModal';
-import { fetchModels, sendChatMessage, uploadFile } from './api/openwebui';
+import { fetchModels, sendChatMessage, sendChatMessageStreaming, uploadFile } from './api/openwebui';
 import { handleCommand } from './commands';
 import { handleApiError } from './utils/error';
 import { loadConfig } from './utils/config';
@@ -13,21 +14,24 @@ function App() {
   const [config, setConfig] = useState({
     openWebUIUrl: "https://open.sadoway.ca",
     apiKey: "",
-    selectedModel: "phi4-mini:latest"
+    selectedModel: "deepseekr138b.deepseek-r1"
   });
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [showSettings, setShowSettings] = useState(false);
-  const [openWebUIUrl, setOpenWebUIUrl] = useState(localStorage.getItem('openWebUIUrl') || '');
-  const [apiKey, setApiKey] = useState(localStorage.getItem('apiKey') || '');
+  const [openWebUIUrl, setOpenWebUIUrl] = useState(localStorage.getItem('openWebUIUrl') || config.openWebUIUrl);
+  const [apiKey, setApiKey] = useState(localStorage.getItem('apiKey') || config.apiKey);
   const [models, setModels] = useState([]);
-  const [selectedModel, setSelectedModel] = useState(localStorage.getItem('selectedModel') || '');
+  const [selectedModel, setSelectedModel] = useState(localStorage.getItem('selectedModel') || config.selectedModel);
   const [fetchError, setFetchError] = useState(null);
   const [isTyping, setIsTyping] = useState(false);
+  const [activeStreamController, setActiveStreamController] = useState(null);
   const [uploadedFile, setUploadedFile] = useState(null);
   const [fileId, setFileId] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [fileError, setFileError] = useState(null);
+  const [isModelLoading, setIsModelLoading] = useState(false);
+  const [loadingModel, setLoadingModel] = useState('');
   const chatContainerRef = useRef(null);
 
   // Load config.json at runtime using the loadConfig utility
@@ -98,19 +102,57 @@ function App() {
 
   useEffect(() => {
     const initialize = async () => {
-      if (openWebUIUrl && apiKey && selectedModel) {
+      if (openWebUIUrl && apiKey) {
         try {
           const fetchedModels = await fetchModels(openWebUIUrl, apiKey);
-          setModels(fetchedModels.map(model => model.id));
+          
+          // Store models - handle both object and string formats
+          if (Array.isArray(fetchedModels) && fetchedModels.length > 0) {
+            setModels(fetchedModels);
+            console.log('Fetched models:', fetchedModels);
+            
+            // If no model is selected yet, select the first one
+            if (!selectedModel) {
+              const firstModelId = typeof fetchedModels[0] === 'object' && fetchedModels[0].id
+                ? fetchedModels[0].id
+                : fetchedModels[0];
+              setSelectedModel(firstModelId);
+              localStorage.setItem('selectedModel', firstModelId);
+              console.log('Auto-selected first model:', firstModelId);
+            }
+          } else {
+            // If we couldn't load any models, set some defaults
+            const defaultModels = [
+              "deepseekr138b.deepseek-r1",
+              "phi4-mini:latest",
+              "phi2:latest",
+              "llama2:latest"
+            ];
+            setModels(defaultModels);
+            console.log('Using default models:', defaultModels);
+          }
         } catch (error) {
-          handleApiError(error, 'Initialization');
-          setFetchError(error.message);
+          // If we get an error, set some default models
+          const defaultModels = [
+            "deepseekr138b.deepseek-r1",
+            "phi4-mini:latest",
+            "phi2:latest",
+            "llama2:latest"
+          ];
+          setModels(defaultModels);
+          console.log('Error fetching models, using defaults:', defaultModels);
+          
+          const errorDetails = handleApiError(error, 'Initialization');
+          const errorMessage = errorDetails.statusCode === 401 ?
+            'Could not load models: Authentication failed. Please check your API key in settings.' :
+            `Could not load models: ${errorDetails.message}`;
+          setFetchError(errorMessage);
         }
       }
     };
 
     initialize();
-  }, [openWebUIUrl, apiKey, selectedModel]);
+  }, [openWebUIUrl, apiKey]);
 
   const handleFileUpload = async (file) => {
     console.log('App: handleFileUpload called with file:', file.name, file.type, file.size);
@@ -124,9 +166,13 @@ function App() {
       console.log('App: File uploaded successfully:', response);
       setFileId(response.id);
     } catch (error) {
-      console.error('App: Error uploading file:', error);
-      setFileError('Failed to upload file. Please try again.');
+      const errorDetails = handleApiError(error, 'handleFileUpload');
+      const errorMessage = errorDetails.statusCode === 401 ?
+        'Authentication failed. Please check your API key in settings.' :
+        `Failed to upload file: ${errorDetails.message}`;
+      setFileError(errorMessage);
       setUploadedFile(null);
+      setFetchError(errorDetails.message);
     } finally {
       console.log('App: Upload process completed');
       setIsUploading(false);
@@ -163,40 +209,109 @@ function App() {
     };
     setMessages(prevMessages => [...prevMessages, userMessage]);
     setInput('');
-    setIsTyping(true);
     
     // Clear the file immediately after sending
     const tempFileId = fileId; // Store fileId temporarily for the API call
     setUploadedFile(null);
     setFileId(null);
 
+    // Create an initial assistant message ID for tracking
+    const assistantMessageId = Date.now();
+    
+    // Set typing indicator but don't add the message yet
+    setIsTyping(true);
+
     try {
-      const response = await sendChatMessage(
+      // Use streaming API and store the controller
+      const controller = await sendChatMessageStreaming(
         openWebUIUrl,
         apiKey,
         selectedModel,
         [...messages, userMessage],
-        tempFileId // Pass the temporary file ID if available
+        tempFileId,
+        // onChunk callback - add the message if it doesn't exist yet, or update it
+        (chunk) => {
+          setMessages(prevMessages => {
+            const updatedMessages = [...prevMessages];
+            const assistantMessageIndex = updatedMessages.findIndex(msg => msg.id === assistantMessageId);
+            
+            if (assistantMessageIndex !== -1) {
+              // Message exists, update it
+              updatedMessages[assistantMessageIndex] = {
+                ...updatedMessages[assistantMessageIndex],
+                content: updatedMessages[assistantMessageIndex].content + chunk
+              };
+            } else {
+              // Message doesn't exist yet, add it
+              updatedMessages.push({
+                id: assistantMessageId,
+                role: 'assistant',
+                content: chunk.trim(),
+                isResponseToRetry: false,
+                isStreaming: true
+              });
+            }
+            
+            return updatedMessages;
+          });
+        },
+        // onComplete callback - mark streaming as complete
+        (fullContent) => {
+          setMessages(prevMessages => {
+            const updatedMessages = [...prevMessages];
+            const assistantMessageIndex = updatedMessages.findIndex(msg => msg.id === assistantMessageId);
+            if (assistantMessageIndex !== -1) {
+              updatedMessages[assistantMessageIndex] = {
+                ...updatedMessages[assistantMessageIndex],
+                content: fullContent.trim(),
+                isStreaming: false
+              };
+            }
+            return updatedMessages;
+          });
+          setIsTyping(false);
+          setActiveStreamController(null); // Clear the controller when streaming is complete
+        }
       );
-      if (!response || !response.choices || !response.choices.length || !response.choices[0].message) {
-        throw new Error('Invalid response format from API.');
-      }
-      const assistantMessage = {
-        role: 'assistant',
-        content: response.choices[0].message.content,
-        isResponseToRetry: false
-      };
-      setMessages(prevMessages => [...prevMessages, assistantMessage]);
+      
+      // Store the controller so we can abort it if needed
+      setActiveStreamController(controller);
     } catch (error) {
-      handleApiError(error, 'handleSendMessage');
-      const errorAssistantMessage = {
-        role: 'assistant',
-        content: 'Failed to get response from API, Check Settings',
-        isResponseToRetry: false
-      };
-      setMessages(prevMessages => [...prevMessages, errorAssistantMessage]);
-    } finally {
+      const errorDetails = handleApiError(error, 'handleSendMessage');
+      // Check if a message was created and update it, or create a new error message
+      setMessages(prevMessages => {
+        const updatedMessages = [...prevMessages];
+        const assistantMessageIndex = updatedMessages.findIndex(msg => msg.id === assistantMessageId);
+        
+        const errorContent = `Error: ${errorDetails.message}${errorDetails.statusCode ? ` (Status: ${errorDetails.statusCode})` : ''}`;
+        
+        if (assistantMessageIndex !== -1) {
+          // Update existing message with error
+          updatedMessages[assistantMessageIndex] = {
+            ...updatedMessages[assistantMessageIndex],
+            content: errorContent,
+            isStreaming: false,
+            isError: true
+          };
+        } else {
+          // Create new error message
+          updatedMessages.push({
+            id: assistantMessageId,
+            role: 'assistant',
+            content: errorContent,
+            isResponseToRetry: false,
+            isStreaming: false,
+            isError: true
+          });
+        }
+        
+        // Set fetch error state for potential UI display
+        setFetchError(errorDetails.message);
+        
+        return updatedMessages;
+      });
       setIsTyping(false);
+      setActiveStreamController(null); // Clear the controller on error
     }
   };
 
@@ -210,6 +325,22 @@ function App() {
       setSelectedModel(value);
     }
   };
+  
+  const handleModelChange = (modelId) => {
+    // Set loading state
+    setIsModelLoading(true);
+    setLoadingModel(modelId);
+    
+    // Store the model ID in localStorage
+    localStorage.setItem('selectedModel', modelId);
+    setSelectedModel(modelId);
+    
+    // Simulate loading time (3-5 seconds)
+    setTimeout(() => {
+      setIsModelLoading(false);
+      setLoadingModel('');
+    }, 3000 + Math.random() * 2000); // Random time between 3-5 seconds
+  };
 
   const handleSaveSettings = async (e) => {
     e.preventDefault();
@@ -220,24 +351,78 @@ function App() {
 
     try {
       const fetchedModels = await fetchModels(openWebUIUrl, apiKey);
-      setModels(fetchedModels.map(model => model.id));
+      // Store full model objects instead of just IDs
+      setModels(fetchedModels);
       setFetchError(null);
     } catch (error) {
-      handleApiError(error, 'handleSaveSettings');
-      setFetchError(error.message);
+      const errorDetails = handleApiError(error, 'handleSaveSettings');
+      const errorMessage = errorDetails.statusCode === 401 ?
+        'Failed to save settings: Authentication failed. Please verify your API key.' :
+        `Failed to save settings: ${errorDetails.message}`;
+      setFetchError(errorMessage);
     }
   };
 
   const handleLoadDefaultSettings = () => {
-    // Use the dynamically loaded config
-    setOpenWebUIUrl(config.openWebUIUrl);
-    setApiKey(config.apiKey);
-    setSelectedModel(config.selectedModel);
+    // Use the dynamically loaded config with fallbacks
+    setOpenWebUIUrl(config.openWebUIUrl || "https://open.sadoway.ca");
+    setApiKey(config.apiKey || "");
+    setSelectedModel(config.selectedModel || "deepseekr138b.deepseek-r1");
     console.log('Loaded default settings from config:', config);
   };
 
   const handleClearChat = () => {
     setMessages([]);
+  };
+
+  const handleStopGeneration = (messageId) => {
+    console.log('Stopping generation for message:', messageId);
+    
+    // If there's an active stream controller, abort it
+    if (activeStreamController) {
+      activeStreamController.abort();
+      setActiveStreamController(null);
+    }
+    
+    // Update the message to remove streaming state
+    setMessages(prevMessages => {
+      const updatedMessages = [...prevMessages];
+      
+      // Find the streaming message
+      let messageIndex = -1;
+      
+      if (messageId) {
+        // If messageId is provided, find that specific message
+        messageIndex = updatedMessages.findIndex(msg => msg.id === messageId);
+      } else {
+        // Otherwise find any streaming message
+        messageIndex = updatedMessages.findIndex(msg => msg.isStreaming);
+      }
+      
+      if (messageIndex !== -1) {
+        updatedMessages[messageIndex] = {
+          ...updatedMessages[messageIndex],
+          isStreaming: false,
+          content: updatedMessages[messageIndex].content + " [Generation stopped]"
+        };
+      } else {
+        // If no streaming message found but we're in typing state,
+        // add a new message indicating generation was stopped
+        const lastUserMessageIndex = updatedMessages.findLastIndex(msg => msg.role === 'user');
+        if (lastUserMessageIndex !== -1) {
+          updatedMessages.push({
+            id: Date.now(),
+            role: 'assistant',
+            content: "[Generation stopped before completion]",
+            isStreaming: false
+          });
+        }
+      }
+      
+      return updatedMessages;
+    });
+    
+    setIsTyping(false);
   };
   const handleRetrySend = async (retryMessage, originalUserMessageIndex) => {
     setIsTyping(true);
@@ -256,26 +441,99 @@ function App() {
       // Log for debugging
       console.log('Sending retry with original message index:', originalUserMessageIndex);
       
-      const response = await sendChatMessage(openWebUIUrl, apiKey, selectedModel, messagesWithRetry);
-      if (!response || !response.choices || !response.choices.length || !response.choices[0].message) {
-        throw new Error('Invalid response format from API.');
-      }
-      const assistantMessage = {
-        role: 'assistant',
-        content: response.choices[0].message.content,
-        isResponseToRetry: messagesWithRetry.some(msg => msg.isRetryPrompt)
-      };
-      setMessages(prevMessages => [...prevMessages, assistantMessage]);
+      // Create an initial assistant message ID for tracking
+      const assistantMessageId = Date.now();
+      
+      // Use streaming API for retry and store the controller
+      const controller = await sendChatMessageStreaming(
+        openWebUIUrl,
+        apiKey,
+        selectedModel,
+        messagesWithRetry,
+        null, // No file ID for retry
+        // onChunk callback - add the message if it doesn't exist yet, or update it
+        (chunk) => {
+          setMessages(prevMessages => {
+            const updatedMessages = [...prevMessages];
+            const assistantMessageIndex = updatedMessages.findIndex(msg => msg.id === assistantMessageId);
+            
+            if (assistantMessageIndex !== -1) {
+              // Message exists, update it
+              updatedMessages[assistantMessageIndex] = {
+                ...updatedMessages[assistantMessageIndex],
+                content: updatedMessages[assistantMessageIndex].content + chunk
+              };
+            } else {
+              // Message doesn't exist yet, add it
+              updatedMessages.push({
+                id: assistantMessageId,
+                role: 'assistant',
+                content: chunk.trim(),
+                isResponseToRetry: true,
+                isStreaming: true
+              });
+            }
+            
+            return updatedMessages;
+          });
+        },
+        // onComplete callback - mark streaming as complete
+        (fullContent) => {
+          setMessages(prevMessages => {
+            const updatedMessages = [...prevMessages];
+            const assistantMessageIndex = updatedMessages.findIndex(msg => msg.id === assistantMessageId);
+            if (assistantMessageIndex !== -1) {
+              updatedMessages[assistantMessageIndex] = {
+                ...updatedMessages[assistantMessageIndex],
+                content: fullContent.trim(),
+                isStreaming: false
+              };
+            }
+            return updatedMessages;
+          });
+          setIsTyping(false);
+          setActiveStreamController(null); // Clear the controller when streaming is complete
+        }
+      );
+      
+      // Store the controller so we can abort it if needed
+      setActiveStreamController(controller);
     } catch (error) {
-      handleApiError(error, 'handleSendMessage');
-      const errorAssistantMessage = {
-        role: 'assistant',
-        content: 'Failed to get response from API, Check Settings',
-        isResponseToRetry: true
-      };
-      setMessages(prevMessages => [...prevMessages, errorAssistantMessage]);
-    } finally {
+      const errorDetails = handleApiError(error, 'handleRetrySend');
+      // Check if a message was created and update it, or create a new error message
+      setMessages(prevMessages => {
+        const updatedMessages = [...prevMessages];
+        const assistantMessageIndex = updatedMessages.findIndex(msg => msg.id === assistantMessageId);
+        
+        const errorContent = `Error: ${errorDetails.message}${errorDetails.statusCode ? ` (Status: ${errorDetails.statusCode})` : ''}`;
+        
+        if (assistantMessageIndex !== -1) {
+          // Update existing message with error
+          updatedMessages[assistantMessageIndex] = {
+            ...updatedMessages[assistantMessageIndex],
+            content: errorContent,
+            isStreaming: false,
+            isError: true
+          };
+        } else {
+          // Create new error message
+          updatedMessages.push({
+            id: assistantMessageId,
+            role: 'assistant',
+            content: errorContent,
+            isResponseToRetry: true,
+            isStreaming: false,
+            isError: true
+          });
+        }
+        
+        // Set fetch error state for potential UI display
+        setFetchError(errorDetails.message);
+        
+        return updatedMessages;
+      });
       setIsTyping(false);
+      setActiveStreamController(null); // Clear the controller on error
     }
   };
 
@@ -362,9 +620,31 @@ function App() {
 
   return (
     <div className="container">
-      <Header handleClearChat={handleClearChat} />
+      <Header
+        handleClearChat={handleClearChat}
+        isModelLoading={isModelLoading}
+        loadingModel={loadingModel}
+      />
       {fetchError && <div className="error-message">{fetchError}</div>}
-      <ChatMessages messages={messages} chatContainerRef={chatContainerRef} isTyping={isTyping} handleRetry={handleRetry} />
+      <ChatMessages
+        messages={messages}
+        chatContainerRef={chatContainerRef}
+        isTyping={isTyping}
+        handleRetry={handleRetry}
+        handleStopGeneration={handleStopGeneration}
+      />
+      {isTyping && (
+        <div className="stop-generation-floating">
+          <button
+            className="stop-button-floating"
+            onClick={() => handleStopGeneration()}
+            aria-label="Stop generation"
+          >
+            <FiSquare />
+            <span>Stop</span>
+          </button>
+        </div>
+      )}
       <ChatInput
         input={input}
         setInput={setInput}
@@ -378,6 +658,8 @@ function App() {
         onFileError={handleFileError}
         fileError={fileError}
         isUploading={isUploading}
+        onModelChange={handleModelChange}
+        isModelLoading={isModelLoading}
       />
       {showSettings && (
         <div className="settings-modal">

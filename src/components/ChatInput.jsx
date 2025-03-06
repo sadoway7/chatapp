@@ -14,7 +14,9 @@ const ChatInput = ({
   onFileRemove,
   onFileError,
   fileError,
-  isUploading
+  isUploading,
+  onModelChange,
+  isModelLoading
 }) => {
   const textareaRef = useRef(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -63,7 +65,11 @@ const ChatInput = ({
   };
 
   const selectModel = (model) => {
-    setSelectedModel(model);
+    if (onModelChange) {
+      onModelChange(model);
+    } else {
+      setSelectedModel(model);
+    }
     setDropdownOpen(false);
   };
 
@@ -101,19 +107,36 @@ const ChatInput = ({
               onClick={toggleDropdown}
               title="Select AI Model"
             >
-              {selectedModel} {dropdownOpen ? <FiChevronUp /> : <FiChevronDown />}
+              <span className="toggle-model-name">
+                {selectedModel && (typeof selectedModel === 'object' ? selectedModel.id : selectedModel)}
+              </span>
+              {dropdownOpen ? <FiChevronUp /> : <FiChevronDown />}
             </button>
             {dropdownOpen && (
               <div className="dropdown-menu">
-                {models.map(model => (
-                  <button
-                    key={model}
-                    className={`dropdown-item ${model === selectedModel ? 'active' : ''}`}
-                    onClick={() => selectModel(model)}
-                  >
-                    {model}
-                  </button>
-                ))}
+                {models.map(model => {
+                  // Handle both cases: model as object or model as string
+                  const modelId = typeof model === 'object' && model.id ? model.id : model;
+                  const displayName = typeof model === 'object' && model.name ? model.name : modelId;
+                  const selectedModelId = typeof selectedModel === 'object' && selectedModel.id ?
+                    selectedModel.id : selectedModel;
+                  
+                  return (
+                    <button
+                      key={modelId}
+                      className={`dropdown-item ${modelId === selectedModelId ? 'active' : ''}`}
+                      onClick={() => selectModel(modelId)}
+                    >
+                      <div className="model-name">{displayName}</div>
+                      {typeof model === 'object' && model.size_parameters && (
+                        <div className="model-size">
+                          {(model.size_parameters / 1000000000).toFixed(1)}B params
+                          {model.quantization_level && ` (${model.quantization_level})`}
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>

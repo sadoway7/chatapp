@@ -256,14 +256,14 @@ body {
 
 
 .message {
-  padding: 6px 19px;
-  padding-bottom: 10px;
   max-width: 78%;
   clear: both;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
   transform: translateY(10px);
-
   display: block;        /* Changed back to block */
+  box-sizing: border-box;
+  overflow: hidden; /* Ensure floated children are contained */
+  line-height: 1.6; /* Increased for better readability */
 }
 
 
@@ -273,8 +273,8 @@ body {
   width: fit-content;    /* Fit content width */
   min-width: 40%;
   margin-right: 16px;
-  padding-top: 20px;
-  align-self: inline-flex;
+  padding: 11px 16px 16px 25px;
+  align-self: flex-end; /* Ensure it stays on the right */
   margin-top: 8px;
   margin-bottom: 16px;
   font-size: 1.1rem;
@@ -292,6 +292,8 @@ body {
   transition: box-shadow 0.2s ease, transform 0.2s ease;
   position: relative;
   overflow: hidden;
+  float: right; /* Ensure it stays on the right */
+  line-height: normal; /* Reset line height */
 }
 
 /* Removed blue dot as requested */
@@ -317,12 +319,12 @@ body {
 
 .assistant-message {
   background-color: #f2f2f2;
-  padding-top: 20px;
+  padding: 18px 26px 0px 26px;
   align-self: flex-start;
   color: rgba(0, 0, 0, 0.85); /* Slightly softer than pure black */
-  margin-left: 16px;
+  margin-left: 30px;
   margin-top: 5px;
-  margin-bottom: 55px; /* Further increased to provide more space for the action buttons */
+  margin-bottom: 25px; /* Further increased to provide more space for the action buttons */
   font-size: 1.1rem;
   border-radius: 4px 18px 18px 18px; /* Asymmetric corners for character */
   position: relative;
@@ -338,6 +340,9 @@ body {
   background-image:
     linear-gradient(to bottom right, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0));
   overflow: hidden;
+  float: left; /* Ensure it stays on the left */
+  width: fit-content; /* Fit content width */
+  line-height: normal; /* Reset line height */
 }
 
 .assistant-message::before {
@@ -376,12 +381,75 @@ body {
 .message-content {
   word-wrap: break-word;
   white-space: pre-line;
-  margin-bottom: 0.7rem;
-  line-height: 1.5; /* Improved line height for readability */
-  padding: 0 2px; /* Slight padding for better text spacing */
+  margin: 0; /* Remove all margins */
+  line-height: 1.6; /* Increased for better readability */
+  padding: 0; /* Remove padding to fix spacing */
   text-rendering: optimizeLegibility; /* Better text rendering */
   -webkit-font-smoothing: antialiased; /* Smoother fonts on webkit browsers */
   -moz-osx-font-smoothing: grayscale; /* Smoother fonts on Firefox */
+  display: block; /* Change to block */
+  height: auto; /* Auto height */
+  padding: 15px 26px -50px 26px;
+  min-height: 0; /* No minimum height */
+}
+
+/* Fix spacing in markdown content */
+.markdown-content {
+  line-height: 1.6; /* Increased for better readability */
+  margin: 0;
+  padding: 0;
+  display: inline; /* Change to inline */
+  width: auto; /* Auto width */
+  height: auto; /* Auto height */
+  min-height: 0; /* No minimum height */
+}
+
+/* Remove ALL margins and padding from all elements */
+.markdown-content * {
+  margin: 0 !important;
+  padding: 0 !important;
+  line-height: 1.6 !important; /* Increased for better readability */
+}
+
+/* Add spacing only between paragraphs */
+.markdown-content p + p {
+  margin-top: 0.8em !important; /* Increased for better readability */
+}
+
+/* Ensure no bottom margin or padding on any element */
+.markdown-content > *:last-child {
+  margin-bottom: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+/* Special styling for single-line messages */
+.single-line {
+  padding: 0 !important;
+  margin: 0 !important;
+  line-height: 1.6 !important; /* Increased for better readability */
+  height: auto !important;
+  min-height: 0 !important;
+}
+
+.single-line .markdown-content,
+.single-line .user-content {
+  display: inline !important;
+  line-height: 1.6 !important; /* Increased for better readability */
+}
+
+/* User content styling */
+.user-content {
+  white-space: pre-line;
+  line-height: 1.6; /* Increased for better readability */
+  margin: 0;
+  padding: 0;
+}
+
+/* Adjust padding for messages with single-line content */
+.user-message .single-line,
+.assistant-message .single-line {
+  padding: 0 !important;
+  margin: 0 !important;
 }
 
 .message-actions-container {
@@ -512,6 +580,73 @@ body {
   overflow: hidden;
 }
 
+/* Floating stop generation button */
+.stop-generation-floating {
+  position: fixed;
+  bottom: 90px; /* Position above the chat input */
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  width: auto;
+  display: flex;
+  justify-content: center;
+  animation: fadeInUp 0.3s ease-out;
+}
+
+.stop-button-floating {
+  background-color: rgba(60, 60, 60, 0.8);
+  color: #f0f0f0;
+  border: none;
+  border-radius: 16px;
+  cursor: pointer;
+  padding: 6px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.stop-button-floating:hover {
+  background-color: rgba(80, 80, 80, 0.9);
+  transform: translateY(-1px);
+}
+
+.stop-button-floating:active {
+  transform: translateY(0);
+}
+
+.stop-button-floating svg {
+  font-size: 1rem;
+  color: #ff9800;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 10px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+/* Mobile adjustments for stop button */
+@media (max-width: 768px) {
+  .stop-generation-floating {
+    bottom: 100px; /* Position higher on mobile */
+  }
+  
+  .stop-button-floating {
+    padding: 6px 14px;
+    font-size: 0.9rem;
+  }
+}
+
 .copy-button {
   background-color: rgba(255, 255, 255, 0.9);
 }
@@ -611,7 +746,7 @@ body {
   justify-content: center;
   margin: 16px auto 60px; /* Increased bottom margin to avoid being covered by input */
   animation: slideIn 0.5s ease forwards;
-  opacity: 0; /* Start hidden */
+  opacity: 1; /* Make it visible immediately */
   width: 70px;
   height: 24px;
   padding: 0 8px;
@@ -619,17 +754,22 @@ body {
   background: rgba(42, 42, 42, 0.8);
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(4px);
-  z-index: 10; /* Ensure it appears above other elements */
+  z-index: 1000; /* Higher z-index to ensure it appears above other elements */
+  clear: both; /* Ensure it appears below floated messages */
 }
 
 @keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
+  0% {
+    opacity: 0.5;
+    transform: translateY(10px) scale(0.9);
   }
-  to {
+  50% {
+    opacity: 0.8;
+    transform: translateY(5px) scale(0.95);
+  }
+  100% {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
   }
 }
 
@@ -663,13 +803,14 @@ body {
 .typing-indicator span {
   position: relative;
   display: inline-block;
-  width: 6px;
-  height: 6px;
+  width: 8px; /* Larger dots */
+  height: 8px;
   border-radius: 50%;
   background: #ffffff;
-  margin: 0 3px;
+  margin: 0 4px; /* More space between dots */
   transform: translateY(0);
   z-index: 1;
+  box-shadow: 0 0 5px rgba(255, 255, 255, 0.5); /* Add glow effect */
 }
 
 /* First dot animation */
@@ -689,12 +830,15 @@ body {
 
 @keyframes bounce {
   0%, 100% {
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
     background: #ffffff;
+    opacity: 0.8;
   }
   50% {
-    transform: translateY(-5px);
+    transform: translateY(-7px) scale(1.2); /* More pronounced bounce */
     background: #ff9800;
+    opacity: 1;
+    box-shadow: 0 0 8px rgba(255, 152, 0, 0.8); /* Stronger glow at peak */
   }
 }
 
@@ -818,6 +962,13 @@ body {
     height: 28px;
 }
 
+.toggle-model-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 140px;
+}
+
 .dropdown-toggle:hover {
     background-color: rgba(255, 255, 255, 0.1);
 }
@@ -832,7 +983,10 @@ body {
     box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
     z-index: 110; /* Increased to be higher than send button (101) */
     min-width: 290px;
-    overflow: hidden;
+    max-width: 350px;
+    max-height: 400px;
+    overflow-y: auto;
+    overflow-x: hidden;
     padding: 6px;
 }
 
@@ -862,6 +1016,33 @@ body {
 .dropdown-item.active {
     background-color: #3a3a3a;
     font-weight: 500;
+}
+
+/* Model info styles */
+.model-name {
+    font-weight: 600;
+    font-size: 1rem;
+    color: #fff;
+    margin-bottom: 4px;
+}
+
+.model-size {
+    font-size: 0.8rem;
+    color: #aaa;
+    opacity: 0.9;
+}
+
+.dropdown-item {
+    text-align: left;
+    padding: 10px 16px;
+}
+
+.dropdown-item:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.dropdown-item.active {
+    background-color: rgba(255, 255, 255, 0.15);
 }
 
 /* Adjust chat input container padding for the footer */
@@ -1726,4 +1907,308 @@ body {
   background: rgba(255, 255, 255, 0.9);
   color: #000000;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* Markdown Content Styles */
+.markdown-content {
+  line-height: 1.5; /* Slightly reduced line height */
+  color: inherit;
+  font-family: inherit;
+  padding: 0; /* Remove padding from container */
+  margin: 0; /* Remove margin */
+  max-width: 100%; /* Full width */
+  word-break: break-word; /* Break long words if needed */
+  overflow-wrap: break-word; /* Ensure words wrap properly */
+}
+
+/* Override default markdown styling to add proper padding */
+.assistant-message .markdown-content {
+  display: block !important; /* Force block display */
+  padding: 0 !important; /* Remove padding from container */
+  margin: 0 !important; /* Remove margin */
+  width: 100% !important; /* Full width */
+}
+
+/* Headings */
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3,
+.markdown-content h4,
+.markdown-content h5,
+.markdown-content h6 {
+  margin-top: 0.4em; /* Further reduced from 0.6em */
+  margin-bottom: 0.2em; /* Further reduced from 0.3em */
+  font-weight: 600;
+  color: inherit;
+  line-height: 1.2; /* Reduced from 1.3 */
+  border-bottom: none;
+}
+
+.markdown-content h1 {
+  font-size: 1.4em;
+  padding-bottom: 0.2em;
+}
+
+.markdown-content h2 {
+  font-size: 1.3em;
+  padding-bottom: 0.2em;
+}
+
+.markdown-content h3 {
+  font-size: 1.2em;
+}
+
+.markdown-content h4,
+.markdown-content h5,
+.markdown-content h6 {
+  font-size: 1.1em;
+}
+
+/* Paragraphs and lists */
+.markdown-content p {
+  margin-bottom: 0.3em; /* Further reduced from 0.5em */
+  margin-top: 0.3em; /* Added top margin */
+  padding-left: 0.5em; /* Add left padding */
+  padding-right: 0.5em; /* Add right padding */
+}
+
+.markdown-content ul,
+.markdown-content ol {
+  margin-left: 2em; /* Increased from 1.2em */
+  margin-right: 1em; /* Added right margin */
+  margin-bottom: 0.3em; /* Further reduced from 0.5em */
+  margin-top: 0.3em; /* Reduced from 0.5em */
+  padding-left: 0.5em; /* Add left padding */
+  padding-right: 0.5em; /* Add right padding */
+}
+
+.markdown-content li {
+  margin-bottom: 0.1em; /* Further reduced from 0.2em */
+  padding-right: 0.5em; /* Add right padding */
+  padding-left: 0.5em; /* Add left padding */
+}
+
+/* Ensure lists have proper indentation */
+.assistant-message .markdown-content ul,
+.assistant-message .markdown-content ol {
+  margin-left: 2em !important;
+  margin-right: 1em !important;
+  padding-left: 0.5em !important;
+  padding-right: 0.5em !important;
+}
+
+.assistant-message .markdown-content li {
+  padding-left: 0.5em !important;
+  padding-right: 0.5em !important;
+}
+
+.markdown-content li p {
+  margin: 0;
+}
+
+/* Code blocks and inline code */
+.markdown-content code {
+  font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+  background-color: rgba(0, 0, 0, 0.2);
+  color: #ff9800;
+  padding: 0.1em 0.3em;
+  border-radius: 3px;
+  font-size: 0.9em;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  margin: 0 2px; /* Add margin to prevent touching edge */
+}
+
+.markdown-content pre {
+  background-color: rgba(0, 0, 0, 0.2);
+  padding: 0.8em; /* Increased padding */
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.5em 0; /* Reduced vertical margin */
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative; /* For positioning the copy button */
+  width: calc(100% - 16px) !important; /* Set width with padding in mind */
+  max-width: calc(100% - 16px) !important; /* Ensure it doesn't overflow */
+}
+
+/* Ensure code blocks have proper padding and don't touch edges */
+.assistant-message .markdown-content pre {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  width: calc(100% - 16px) !important;
+  max-width: calc(100% - 16px) !important;
+}
+
+/* Add copy button for code blocks */
+.markdown-content pre::after {
+  content: "Copy";
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background-color: rgba(42, 42, 42, 0.9);
+  color: #ff9800;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.8em;
+  cursor: pointer;
+  border: 1px solid rgba(255, 152, 0, 0.3);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.markdown-content pre:hover::after {
+  opacity: 0.8;
+}
+
+.markdown-content pre::after:hover {
+  opacity: 1;
+  background-color: rgba(60, 60, 60, 0.9);
+}
+
+.markdown-content pre code {
+  background-color: transparent;
+  padding: 0;
+  border: none;
+  color: #e0e0e0;
+  font-size: 0.9em;
+  line-height: 1.5;
+}
+
+/* Blockquotes */
+.markdown-content blockquote {
+  border-left: 3px solid rgba(255, 152, 0, 0.5);
+  padding: 0.3em 1em 0.3em 1em; /* Increased padding all around */
+  margin: 0.8em 1em; /* Added horizontal margin */
+  color: rgba(255, 255, 255, 0.8);
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 0 4px 4px 0;
+  width: calc(100% - 4em) !important; /* Set width with padding and margin in mind */
+}
+
+/* Ensure blockquotes have proper padding */
+.assistant-message .markdown-content blockquote {
+  margin-left: 1em !important;
+  margin-right: 1em !important;
+  padding: 0.3em 1em 0.3em 1em !important;
+}
+
+/* Links */
+.markdown-content a {
+  color: #ff9800;
+  text-decoration: none;
+  border-bottom: 1px dotted rgba(255, 152, 0, 0.5);
+}
+
+.markdown-content a:hover {
+  text-decoration: none;
+  border-bottom: 1px solid #ff9800;
+}
+
+/* Images */
+.markdown-content img {
+  max-width: 100%;
+  border-radius: 6px;
+  margin: 0.8em 0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Tables */
+.markdown-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8em 0;
+  font-size: 0.9em;
+}
+
+.markdown-content table th,
+.markdown-content table td {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.4em 0.6em;
+}
+
+.markdown-content table th {
+  background-color: rgba(0, 0, 0, 0.2);
+  font-weight: 600;
+}
+
+.markdown-content table tr {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.markdown-content table tr:nth-child(2n) {
+  background-color: rgba(0, 0, 0, 0.15);
+}
+
+/* Horizontal rule */
+.markdown-content hr {
+  height: 1px;
+  border: none;
+  background-color: rgba(255, 255, 255, 0.1);
+  margin: 1em 0;
+}
+
+/* Inline elements */
+.markdown-content strong {
+  font-weight: 600;
+}
+
+.markdown-content em {
+  font-style: italic;
+}
+
+/* Fix for code blocks in lists */
+.markdown-content li pre {
+  margin-top: 0.5em;
+}
+
+/* Streaming text animation */
+.streaming {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0.7; }
+  to { opacity: 1; }
+}
+/* Add a subtle highlight to the last character in streaming text */
+.streaming::after {
+  content: '';
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  background-color: rgba(255, 152, 0, 0.5);
+  margin-left: 1px;
+  vertical-align: text-bottom;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.2; }
+  50% { opacity: 0.8; }
+}
+
+/* Model loading indicator */
+.model-loading-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: rgba(255, 152, 0, 0.15);
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 0.9rem;
+  color: #f0f0f0;
+  margin-right: 12px;
+}
+
+.loading-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid #ff9800;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }

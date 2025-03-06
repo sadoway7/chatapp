@@ -35,7 +35,21 @@ const SettingsModal = ({
           <div className="input-group"> {/* Group Model select */}
             <label htmlFor="selectedModel">Model:</label>
             <select id="selectedModel" name="selectedModel" value={selectedModel} onChange={(e) => setSelectedModel(e.target.value)}>
-              {models.map(model => <option key={model} value={model}>{model}</option>)}
+              {models && models.length > 0 ? (
+                models.map(model => {
+                  // Handle both object and string formats
+                  const modelId = typeof model === 'object' && model.id ? model.id : model;
+                  const displayName = typeof model === 'object' && model.name ? model.name : modelId;
+                  
+                  return (
+                    <option key={modelId} value={modelId}>
+                      {displayName}
+                    </option>
+                  );
+                })
+              ) : (
+                <option value="">No models available</option>
+              )}
             </select>
           </div>
 
