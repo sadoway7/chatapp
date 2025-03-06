@@ -278,23 +278,29 @@ body {
   margin-top: 8px;
   margin-bottom: 16px;
   font-size: 1.1rem;
-  border-radius: 18px 4px 18px 18px; /* More modern asymmetric corners */
+  border-radius: 18px 4px 18px 18px; /* Asymmetric corners for character */
   box-shadow:
-    0 2px 8px rgba(0, 0, 0, 0.06),
-    0 4px 12px rgba(0, 0, 0, 0.04),
-    0 1px 4px rgba(0, 0, 0, 0.08);
+    0 2px 4px rgba(0, 0, 0, 0.04),
+    0 4px 12px rgba(0, 0, 0, 0.02),
+    0 8px 24px rgba(0, 0, 0, 0.01),
+    0 0 0 1px rgba(0, 0, 0, 0.02);
   animation: popInuser 0.3s ease forwards;
-  background: linear-gradient(160deg, #ffffff, #f8f8f8);
-  border: 1px solid rgba(0, 0, 0, 0.04); /* Subtle border */
+  background: linear-gradient(135deg, #ffffff, #f8f8f8);
+  border-top: 1px solid rgba(255, 255, 255, 0.8); /* Light top border for depth */
   color: rgba(0, 0, 0, 0.85); /* Slightly softer than pure black */
   letter-spacing: 0.01em; /* Subtle letter spacing for better readability */
   transition: box-shadow 0.2s ease, transform 0.2s ease;
+  position: relative;
+  overflow: hidden;
 }
+
+/* Removed blue dot as requested */
 
 .user-message:hover {
   box-shadow:
-    0 3px 10px rgba(0, 0, 0, 0.08),
-    0 6px 16px rgba(0, 0, 0, 0.06);
+    0 4px 8px rgba(0, 0, 0, 0.06),
+    0 8px 16px rgba(0, 0, 0, 0.04),
+    0 0 0 1px rgba(0, 0, 0, 0.02);
   transform: translateY(-1px); /* Subtle lift effect on hover */
 }
 
@@ -310,34 +316,49 @@ body {
 }
 
 .assistant-message {
-  background-color: #ffffff;
+  background-color: #f2f2f2;
   padding-top: 20px;
   align-self: flex-start;
   color: rgba(0, 0, 0, 0.85); /* Slightly softer than pure black */
   margin-left: 16px;
   margin-top: 5px;
-  margin-bottom: 45px; /* Increased to provide more space for the action buttons */
+  margin-bottom: 55px; /* Further increased to provide more space for the action buttons */
   font-size: 1.1rem;
-  border-radius: 4px 18px 18px 18px; /* More modern asymmetric corners, mirroring user message */
-  border-left: 3px solid #ff9800;
+  border-radius: 4px 18px 18px 18px; /* Asymmetric corners for character */
   position: relative;
   animation: popInassistant 0.2s ease forwards;
   box-shadow:
-    0 2px 8px rgba(255, 152, 0, 0.06),
+    0 2px 4px rgba(0, 0, 0, 0.06),
     0 4px 12px rgba(0, 0, 0, 0.04),
-    0 8px 16px rgba(255, 152, 0, 0.03);
+    0 8px 24px rgba(0, 0, 0, 0.02),
+    0 0 0 1px rgba(0, 0, 0, 0.03);
   letter-spacing: 0.01em; /* Subtle letter spacing for better readability */
-  background: linear-gradient(170deg, #ffffff, #fefefe); /* Subtle gradient */
-  border-top: 1px solid rgba(255, 152, 0, 0.1); /* Subtle top border */
-  border-right: 1px solid rgba(0, 0, 0, 0.04); /* Subtle right border */
-  border-bottom: 1px solid rgba(0, 0, 0, 0.04); /* Subtle bottom border */
+  border-left: 2px solid rgba(236, 72, 153, 0.2); /* Subtle hint of pink */
   transition: box-shadow 0.2s ease, transform 0.2s ease;
+  background-image:
+    linear-gradient(to bottom right, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0));
+  overflow: hidden;
+}
+
+.assistant-message::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background:
+    radial-gradient(circle at 10% 20%, rgba(236, 72, 153, 0.03), transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(59, 130, 246, 0.03), transparent 50%);
+  opacity: 0.5;
+  pointer-events: none;
 }
 
 .assistant-message:hover {
   box-shadow:
-    0 3px 10px rgba(255, 152, 0, 0.08),
-    0 6px 16px rgba(0, 0, 0, 0.06);
+    0 4px 8px rgba(0, 0, 0, 0.08),
+    0 8px 16px rgba(0, 0, 0, 0.06),
+    0 0 0 1px rgba(0, 0, 0, 0.03);
   transform: translateY(-1px); /* Subtle lift effect on hover */
 }
 
@@ -365,27 +386,37 @@ body {
 
 .message-actions-container {
   position: absolute;
-  bottom: -30px;  /* Moved down further from the text */
+  bottom: -35px;  /* Moved down even further from the text */
   left: 10px;  /* Position at the bottom left */
   display: flex;
   flex-direction: row;  /* Changed to row for horizontal layout */
-  border-radius: 24px;
+  border-radius: 12px;
   padding: 6px 10px;
   background-color: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(4px);
   box-shadow:
-    0 2px 6px rgba(0, 0, 0, 0.08),
-    0 4px 12px rgba(0, 0, 0, 0.05);
-  z-index: 50; /* Increased to ensure it appears above all other elements */
-  border: 1px solid rgba(0, 0, 0, 0.04);
+    0 2px 4px rgba(0, 0, 0, 0.06),
+    0 4px 12px rgba(0, 0, 0, 0.04),
+    0 8px 24px rgba(0, 0, 0, 0.02),
+    0 0 0 1px rgba(0, 0, 0, 0.03);
+  z-index: 9000; /* Extremely high z-index to ensure it appears above all other elements */
+  border-left: 2px solid rgba(59, 130, 246, 0.2); /* Subtle hint of blue */
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  background-image: linear-gradient(to right, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.95));
+  pointer-events: auto !important; /* Ensure clicks are registered */
+}
+
+/* Ensure the assistant message doesn't clip the action buttons */
+.assistant-message {
+  overflow: visible !important;
 }
 
 .message-actions-container:hover {
   transform: translateY(-2px);
   box-shadow:
-    0 4px 8px rgba(0, 0, 0, 0.1),
-    0 6px 16px rgba(0, 0, 0, 0.06);
+    0 4px 8px rgba(0, 0, 0, 0.08),
+    0 8px 16px rgba(0, 0, 0, 0.06),
+    0 0 0 1px rgba(0, 0, 0, 0.03);
 }
 
 @media (max-width: 500px) {
@@ -461,8 +492,8 @@ body {
 
 .copy-button,
 .retry-button {
-  background-color: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(0, 0, 0, 0.04);
+  background-color: rgba(255, 255, 255, 0.9);
+  border: none;
   border-radius: 50%;
   cursor: pointer;
   padding: 5px;
@@ -473,11 +504,45 @@ body {
   height: 28px;
   transition: all 0.2s ease;
   box-shadow:
-    0 2px 6px rgba(0, 0, 0, 0.06),
-    0 1px 3px rgba(0, 0, 0, 0.1);
+    0 2px 4px rgba(0, 0, 0, 0.06),
+    0 4px 8px rgba(0, 0, 0, 0.03),
+    0 0 0 1px rgba(0, 0, 0, 0.02);
   margin: 0 4px; /* Increased horizontal spacing */
   position: relative;
   overflow: hidden;
+}
+
+.copy-button {
+  background-color: rgba(255, 255, 255, 0.9);
+}
+
+.retry-button {
+  background-color: rgba(255, 255, 255, 0.9);
+  position: relative;
+}
+
+.retry-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at top right, rgba(125, 211, 252, 0.15), transparent 70%);
+  opacity: 1;
+  z-index: -1;
+}
+
+.copy-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at top left, rgba(236, 72, 153, 0.15), transparent 70%);
+  opacity: 1;
+  z-index: -1;
 }
 
 .copy-button::after,
@@ -491,6 +556,7 @@ body {
   background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 70%);
   opacity: 0;
   transition: opacity 0.3s ease;
+  z-index: 1;
 }
 
 .copy-button:hover,
@@ -499,7 +565,8 @@ body {
   transform: translateY(-2px);
   box-shadow:
     0 4px 8px rgba(0, 0, 0, 0.08),
-    0 2px 4px rgba(0, 0, 0, 0.12);
+    0 8px 16px rgba(0, 0, 0, 0.04),
+    0 0 0 1px rgba(0, 0, 0, 0.02);
 }
 
 .copy-button:hover::after,
@@ -1270,6 +1337,7 @@ body {
 /* Add indicator for messages with attachments */
 .user-message.has-attachment {
   position: relative;
+  padding-top: 30px; /* Increased padding to make room for the filename */
 }
 
 .user-message.has-attachment::before {
@@ -1282,7 +1350,8 @@ body {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23555' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48'%3E%3C/path%3E%3C/svg%3E");
   background-size: contain;
   background-repeat: no-repeat;
-  opacity: 0.6;
+  opacity: 0.8;
+  z-index: 5;
 }
 
 /* Add file name display for messages with attachments */
@@ -1291,13 +1360,16 @@ body {
   position: absolute;
   top: 8px;
   right: 28px;
-  font-size: 0.7rem;
-  color: #777;
-  max-width: 120px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #555;
+  max-width: 200px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  opacity: 0.8;
+  opacity: 1;
+  z-index: 5;
+  display: block !important; /* Force display */
 }
 
 .image-preview {
@@ -1360,6 +1432,17 @@ body {
 
 
 
+/* Dark mode styles for user message attachments */
+.user-message.has-attachment::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23dedede' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48'%3E%3C/path%3E%3C/svg%3E");
+}
+
+.user-message.has-attachment::after {
+  color: #dedede;
+  font-weight: 600;
+  display: block !important;
+}
+
 /* Dark Theme Overrides */
 body {
   background-color: #121212; /* Changed from #000000 to very dark gray */
@@ -1379,37 +1462,34 @@ body {
 /* The header now uses rgba colors with transparency that work well in both themes */
 
 .user-message {
-  background: linear-gradient(160deg, #2a2a2a, #222222);
+  background: #2a2a2a;
   color: #f0f0f0;
   box-shadow:
-    0 2px 8px rgba(0, 0, 0, 0.2),
-    0 4px 12px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+    0 1px 2px rgba(0, 0, 0, 0.2),
+    0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.03);
 }
 
 .user-message:hover {
   box-shadow:
-    0 3px 10px rgba(0, 0, 0, 0.25),
-    0 6px 16px rgba(0, 0, 0, 0.15);
+    0 2px 4px rgba(0, 0, 0, 0.25),
+    0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .assistant-message {
-  background: linear-gradient(170deg, #222222, #1e1e1e);
+  background: #1e1e1e;
   color: #f0f0f0;
-  border-left: 3px solid #ff9800;
-  border-top: 1px solid rgba(255, 152, 0, 0.1);
-  border-right: 1px solid rgba(255, 255, 255, 0.03);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.03);
   box-shadow:
-    0 2px 8px rgba(0, 0, 0, 0.2),
-    0 4px 12px rgba(0, 0, 0, 0.1);
+    0 1px 2px rgba(0, 0, 0, 0.2),
+    0 2px 8px rgba(0, 0, 0, 0.1);
   /* margin-bottom is inherited from the main styles */
 }
 
 .assistant-message:hover {
   box-shadow:
-    0 3px 10px rgba(0, 0, 0, 0.25),
-    0 6px 16px rgba(0, 0, 0, 0.15);
+    0 2px 4px rgba(0, 0, 0, 0.25),
+    0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .chat-messages::-webkit-scrollbar-thumb {
@@ -1428,27 +1508,46 @@ body {
   background-color: rgba(26, 26, 26, 0.95);
   backdrop-filter: blur(4px);
   box-shadow:
-    0 2px 8px rgba(0, 0, 0, 0.2),
-    0 4px 12px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+    0 2px 4px rgba(0, 0, 0, 0.2),
+    0 4px 12px rgba(0, 0, 0, 0.15),
+    0 8px 24px rgba(0, 0, 0, 0.1),
+    0 0 0 1px rgba(0, 0, 0, 0.3);
+  border-left: 2px solid rgba(59, 130, 246, 0.3); /* Subtle hint of blue */
+  background-image: linear-gradient(to right, rgba(30, 30, 30, 0.8), rgba(26, 26, 26, 0.95));
   /* No need to override position properties as they're inherited from the main styles */
   /* z-index is inherited from the main styles */
+  pointer-events: auto !important; /* Ensure clicks are registered */
+}
+
+/* Ensure the assistant message doesn't clip the action buttons in dark mode */
+.assistant-message {
+  overflow: visible !important;
 }
 
 .message-actions-container:hover {
   transform: translateY(-2px);
   box-shadow:
-    0 4px 10px rgba(0, 0, 0, 0.25),
-    0 6px 16px rgba(0, 0, 0, 0.15);
+    0 4px 8px rgba(0, 0, 0, 0.3),
+    0 8px 16px rgba(0, 0, 0, 0.2),
+    0 0 0 1px rgba(0, 0, 0, 0.3);
 }
 
 .copy-button,
 .retry-button {
-  background-color: rgba(42, 42, 42, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background-color: rgba(42, 42, 42, 0.9);
+  border: none;
   box-shadow:
-    0 2px 6px rgba(0, 0, 0, 0.15),
-    0 1px 3px rgba(0, 0, 0, 0.2);
+    0 2px 4px rgba(0, 0, 0, 0.2),
+    0 4px 8px rgba(0, 0, 0, 0.1),
+    0 0 0 1px rgba(0, 0, 0, 0.3);
+}
+
+.copy-button::before {
+  background: radial-gradient(circle at top left, rgba(236, 72, 153, 0.2), transparent 70%);
+}
+
+.retry-button::before {
+  background: radial-gradient(circle at top right, rgba(125, 211, 252, 0.2), transparent 70%);
 }
 
 .copy-button::after,
@@ -1461,8 +1560,9 @@ body {
   background-color: #333333;
   transform: translateY(-2px);
   box-shadow:
-    0 4px 8px rgba(0, 0, 0, 0.2),
-    0 2px 4px rgba(0, 0, 0, 0.3);
+    0 4px 8px rgba(0, 0, 0, 0.3),
+    0 8px 16px rgba(0, 0, 0, 0.2),
+    0 0 0 1px rgba(0, 0, 0, 0.3);
 }
 
 .copy-button:hover::after,
