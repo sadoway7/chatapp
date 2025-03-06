@@ -3,7 +3,7 @@ import Header from './components/Header';
 import ChatInput from './components/ChatInput';
 import ChatMessages from './components/ChatMessages';
 import SettingsModal from './components/SettingsModal';
-import { fetchModels, sendChatMessage } from './api/openwebui';
+import { fetchModels, sendChatMessage, uploadFile } from './api/openwebui';
 import config from './config.json';
 import { handleCommand } from './commands';
 import { handleApiError } from './utils/error';
@@ -19,6 +19,10 @@ function App() {
   const [selectedModel, setSelectedModel] = useState(localStorage.getItem('selectedModel') || config.selectedModel);
   const [fetchError, setFetchError] = useState(null);
   const [isTyping, setIsTyping] = useState(false);
+  const [uploadedFile, setUploadedFile] = useState(null);
+  const [fileId, setFileId] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [fileError, setFileError] = useState(null);
   const chatContainerRef = useRef(null);
 
   useEffect(() => {
@@ -61,6 +65,39 @@ function App() {
     initialize();
   }, [openWebUIUrl, apiKey, selectedModel]);
 
+  const handleFileUpload = async (file) => {
+    console.log('App: handleFileUpload called with file:', file.name, file.type, file.size);
+    setUploadedFile(file);
+    setIsUploading(true);
+    setFileError(null); // Clear any previous errors
+    
+    try {
+      console.log('App: Uploading file to API...');
+      const response = await uploadFile(openWebUIUrl, apiKey, file);
+      console.log('App: File uploaded successfully:', response);
+      setFileId(response.id);
+    } catch (error) {
+      console.error('App: Error uploading file:', error);
+      setFileError('Failed to upload file. Please try again.');
+      setUploadedFile(null);
+    } finally {
+      console.log('App: Upload process completed');
+      setIsUploading(false);
+    }
+  };
+
+  const handleFileRemove = () => {
+    console.log('App: Removing file');
+    setUploadedFile(null);
+    setFileId(null);
+    setFileError(null);
+  };
+
+  const handleFileError = (errorMessage) => {
+    console.log('App: File error:', errorMessage);
+    setFileError(errorMessage);
+  };
+
   const handleSend = async () => {
     if (!input.trim()) return;
 
@@ -73,14 +110,21 @@ function App() {
     const userMessage = {
       role: 'user',
       content: input,
-      isOriginalUserMessage: true // Add metadata to identify original user messages
+      isOriginalUserMessage: true, // Add metadata to identify original user messages
+      hasAttachment: !!fileId // Add flag to indicate if message has a file attachment
     };
     setMessages(prevMessages => [...prevMessages, userMessage]);
     setInput('');
     setIsTyping(true);
 
     try {
-      const response = await sendChatMessage(openWebUIUrl, apiKey, selectedModel, [...messages, userMessage]);
+      const response = await sendChatMessage(
+        openWebUIUrl,
+        apiKey,
+        selectedModel,
+        [...messages, userMessage],
+        fileId // Pass the file ID if available
+      );
       if (!response || !response.choices || !response.choices.length || !response.choices[0].message) {
         throw new Error('Invalid response format from API.');
       }
@@ -100,6 +144,9 @@ function App() {
       setMessages(prevMessages => [...prevMessages, errorAssistantMessage]);
     } finally {
       setIsTyping(false);
+      // Clear the file after sending
+      setUploadedFile(null);
+      setFileId(null);
     }
   };
 
@@ -266,7 +313,20 @@ function App() {
       <Header setShowSettings={setShowSettings} handleClearChat={handleClearChat} showSettings={showSettings} />
       {fetchError && <div className="error-message">{fetchError}</div>}
       <ChatMessages messages={messages} chatContainerRef={chatContainerRef} isTyping={isTyping} handleRetry={handleRetry} />
-      <ChatInput input={input} setInput={setInput} handleSend={handleSend} models={models} selectedModel={selectedModel} setSelectedModel={setSelectedModel} />
+      <ChatInput
+        input={input}
+        setInput={setInput}
+        handleSend={handleSend}
+        models={models}
+        selectedModel={selectedModel}
+        setSelectedModel={setSelectedModel}
+        uploadedFile={uploadedFile}
+        onFileUpload={handleFileUpload}
+        onFileRemove={handleFileRemove}
+        onFileError={handleFileError}
+        fileError={fileError}
+        isUploading={isUploading}
+      />
       {showSettings && (
         <div className="settings-modal">
           <SettingsModal

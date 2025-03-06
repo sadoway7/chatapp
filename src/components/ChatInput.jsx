@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { FiSend, FiChevronDown, FiChevronUp } from 'react-icons/fi';
+import FileUpload from './FileUpload';
 
 const ChatInput = ({
   input,
@@ -7,7 +8,13 @@ const ChatInput = ({
   handleSend,
   selectedModel,
   setSelectedModel,
-  models = []
+  models = [],
+  uploadedFile,
+  onFileUpload,
+  onFileRemove,
+  onFileError,
+  fileError,
+  isUploading
 }) => {
   const textareaRef = useRef(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -62,11 +69,16 @@ const ChatInput = ({
 
   return (
     <div className="chat-input-container">
+      {fileError && (
+        <div className="file-error-message">
+          {fileError}
+        </div>
+      )}
       <div className="input-row">
         <textarea
           ref={textareaRef}
           className="chat-input"
-          placeholder="Type your message..."
+          placeholder={uploadedFile ? `Message with attached file: ${uploadedFile.name}` : "Type your message..."}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
@@ -74,6 +86,14 @@ const ChatInput = ({
         />
       </div>
       <div className="input-footer">
+        <FileUpload
+          onFileUpload={onFileUpload}
+          onFileRemove={onFileRemove}
+          onError={onFileError}
+          uploadedFile={uploadedFile}
+          isUploading={isUploading}
+        />
+        <div className="spacer"></div>
         {models.length > 0 && (
           <div className="custom-dropdown" ref={dropdownRef}>
             <button

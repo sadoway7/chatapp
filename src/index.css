@@ -698,40 +698,48 @@ body {
     align-items: flex-end; /* Changed to flex-end to align items at the bottom */
     position: relative;
     min-height: 34px; /* Further reduced minimum height */
+    margin-bottom: 2px; /* Added small bottom margin */
 }
 
 /* Input footer with model selector and send button */
 .input-footer {
     display: flex;
-    justify-content: space-between;
     align-items: center;
     padding-top: 0px;
-    margin-left: 10px;
-    margin-bottom: 0px;
-    margin-right: 10px;
-    margin-bottom: 0px;
+    margin: 0 6px 4px; /* Added bottom margin */
+    gap: 8px; /* Add gap between elements */
+}
+
+/* Spacer to push elements to the sides */
+.spacer {
+    flex: 1;
 }
 
 /* Custom dropdown styling */
 .custom-dropdown {
     position: relative;
     display: inline-block;
+    margin-right: 4px; /* Add a small margin from the right edge */
+    margin-bottom: 4px; /* Add bottom margin */
 }
 
 .dropdown-toggle {
     background-color: transparent;
     border: none;
     border-radius: 20px;
-    color: #999;
-    font-size: 0.85rem;
-    padding: 8px 7px;
+    color: #777;
+    font-size: 0.8rem;
+    padding: 4px 10px 6px; /* Match file upload button padding */
     cursor: pointer;
     outline: none;
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 6px;
     transition: background-color 0.2s ease;
-    min-width: 150px;
+    min-width: 150px; /* Reduced min-width */
+    text-align: center;
+    height: 28px;
 }
 
 .dropdown-toggle:hover {
@@ -868,6 +876,7 @@ body {
     outline: none;
     border-radius: 18px; /* More rounded to match container */
     margin-right: 0; /* No need for margin since send button is now in footer */
+    margin-bottom: 4px; /* Added bottom margin */
     min-width: 0;
     resize: none; /* Prevent manual resizing */
     overflow-y: auto; /* Enable scrolling for content that exceeds max height */
@@ -907,7 +916,7 @@ body {
   align-items: center;
   justify-content: center;
   /* margin-bottom: 0px; */
-  margin-right: -8px;
+  margin-right: -1px;
   /* margin-left: 0px; */
   z-index: 101;
   box-shadow: 0 1px 2px rgba(31, 41, 55, 0.04),
@@ -915,7 +924,7 @@ body {
               0 3px 6px rgba(31, 41, 55, 0.04),
               0 4px 8px rgba(255, 145, 77, 0.05);
   border: 1px solid rgba(204, 215, 230, 0.8);
-  margin-top: -24px; /* Better alignment with dropdown */
+  margin-top: -29px; /* Better alignment with dropdown */
 }
 
 .send-button:hover {
@@ -1046,6 +1055,149 @@ body {
   color: #ff3b30;
   padding: 10px;
   text-align: center;
+}
+
+/* File Upload Styles */
+.file-upload-container {
+  display: flex;
+  align-items: center;
+  position: relative;
+  margin-right: auto; /* Push to the left side */
+  margin-left: 4px; /* Add a small margin from the left edge */
+  margin-bottom: 4px; /* Add bottom margin */
+}
+
+.file-upload-button {
+  background: transparent;
+  border: none;
+  color: #777;
+  cursor: pointer;
+  padding: 4px 8px 6px; /* Added bottom padding */
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  height: 28px;
+  margin-top: 2px; /* Adjust vertical alignment */
+}
+
+.file-upload-button svg {
+  font-size: 1.05rem; /* Slightly more subtle icon size */
+}
+
+.file-upload-button:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: #aaa;
+}
+
+.uploaded-file {
+  display: flex;
+  align-items: center;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 4px 8px;
+  margin-right: 8px;
+}
+
+.file-name {
+  color: #dedede;
+  font-size: 0.85rem;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-icon {
+  margin-right: 4px;
+  font-size: 1rem;
+}
+
+.remove-file-button {
+  background: transparent;
+  border: none;
+  color: #999;
+  cursor: pointer;
+  padding: 4px;
+  margin-left: 4px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.remove-file-button:hover {
+  color: #ff3b30;
+}
+
+.upload-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-top: 2px solid #ffffff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  position: absolute;
+  right: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* File error message styling */
+.file-error-message {
+  background-color: rgba(255, 59, 48, 0.1);
+  color: #ff3b30;
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+  text-align: center;
+  animation: fadeIn 0.3s ease;
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  margin-bottom: 8px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Add indicator for messages with attachments */
+.user-message.has-attachment::before {
+  content: '📎';
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 0.9rem;
+}
+
+.image-preview {
+  position: fixed;
+  bottom: 100px; /* Position above the input container */
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 16px;
+  background-color: #2a2a2a;
+  border-radius: 8px;
+  padding: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  z-index: 40; /* Higher z-index to appear above other elements */
+}
+
+.preview-image {
+  max-width: 150px;
+  max-height: 100px;
+  border-radius: 4px;
 }
 
 /* Footer */
@@ -1220,16 +1372,16 @@ body {
 /* Dark mode styles for custom dropdown */
 .dropdown-toggle {
   background-color: transparent;
-  margin: 8px 9px;
-  color: #999;
-  margin-top: 0px;      /* Increase to move down */
-  margin-bottom: 8px;   /* Increase to move up */
-  margin-left: -2px;     /* Increase to move right */
-  margin-right: 0px;    /* Increase to move left */
+  margin: 0;
+  color: #777;
+  padding: 4px 10px 6px; /* Match file upload button padding */
+  text-align: center;
+  min-width: 150px; /* Reduced min-width */
 }
 
 .dropdown-toggle:hover {
   background-color: rgba(255, 255, 255, 0.05);
+  color: #aaa;
 }
 
 .dropdown-menu {

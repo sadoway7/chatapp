@@ -43,7 +43,7 @@ const ChatMessages = ({ messages, chatContainerRef, isTyping, handleRetry }) => 
       
       <div className="chat-messages" ref={chatContainerRef}>
         {messages.map((message, index) => (
-          <div key={index} className={`message ${message.role === 'user' ? 'user-message' : 'assistant-message'}`}>
+          <div key={index} className={`message ${message.role === 'user' ? 'user-message' : 'assistant-message'} ${message.hasAttachment ? 'has-attachment' : ''}`}>
             <div className="message-content">{getSafeMessageContent(message.content)}</div>
             {message.role === 'assistant' && typeof message.content === 'string' && (
               <div className="message-actions-container">
