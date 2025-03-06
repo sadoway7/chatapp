@@ -14,5 +14,13 @@ export default defineConfig({
     port: 4173,
     strictPort: true,
     allowedHosts: ['chat.sadoway.ca']  // Replace with your domain
+  },
+  build: {
+    minify: 'esbuild'
+  },
+  optimizeDeps: {
+    esbuildOptions: {
+      target: 'esnext'
+    }
   }
 })
