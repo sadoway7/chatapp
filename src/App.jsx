@@ -4,19 +4,24 @@ import ChatInput from './components/ChatInput';
 import ChatMessages from './components/ChatMessages';
 import SettingsModal from './components/SettingsModal';
 import { fetchModels, sendChatMessage, uploadFile } from './api/openwebui';
-import config from './config.json';
 import { handleCommand } from './commands';
 import { handleApiError } from './utils/error';
+import { loadConfig } from './utils/config';
 import './index.css';
 
 function App() {
+  const [config, setConfig] = useState({
+    openWebUIUrl: "https://open.sadoway.ca",
+    apiKey: "",
+    selectedModel: "phi4-mini:latest"
+  });
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [showSettings, setShowSettings] = useState(false);
-  const [openWebUIUrl, setOpenWebUIUrl] = useState(localStorage.getItem('openWebUIUrl') || config.openWebUIUrl);
-  const [apiKey, setApiKey] = useState(localStorage.getItem('apiKey') || config.apiKey);
+  const [openWebUIUrl, setOpenWebUIUrl] = useState(localStorage.getItem('openWebUIUrl') || '');
+  const [apiKey, setApiKey] = useState(localStorage.getItem('apiKey') || '');
   const [models, setModels] = useState([]);
-  const [selectedModel, setSelectedModel] = useState(localStorage.getItem('selectedModel') || config.selectedModel);
+  const [selectedModel, setSelectedModel] = useState(localStorage.getItem('selectedModel') || '');
   const [fetchError, setFetchError] = useState(null);
   const [isTyping, setIsTyping] = useState(false);
   const [uploadedFile, setUploadedFile] = useState(null);
@@ -25,29 +30,71 @@ function App() {
   const [fileError, setFileError] = useState(null);
   const chatContainerRef = useRef(null);
 
+  // Load config.json at runtime using the loadConfig utility
   useEffect(() => {
-    const storedOpenWebUIUrl = localStorage.getItem('openWebUIUrl');
-    const storedApiKey = localStorage.getItem('apiKey');
-    const storedSelectedModel = localStorage.getItem('selectedModel');
-
-    if (storedOpenWebUIUrl) {
-      setOpenWebUIUrl(storedOpenWebUIUrl);
-    } else {
-      localStorage.setItem('openWebUIUrl', config.openWebUIUrl);
-    }
-
-    if (storedApiKey) {
-      setApiKey(storedApiKey);
-    } else {
-      localStorage.setItem('apiKey', config.apiKey);
-    }
-
-    if (storedSelectedModel) {
-      setSelectedModel(storedSelectedModel);
-    } else {
-      localStorage.setItem('selectedModel', config.selectedModel);
-    }
+    const initializeConfig = async () => {
+      try {
+        const loadedConfig = await loadConfig();
+        console.log('Loaded config using loadConfig utility:', loadedConfig);
+        setConfig(loadedConfig);
+      } catch (error) {
+        console.error('Error loading config:', error);
+      }
+    };
+    
+    initializeConfig();
   }, []);
+
+  // Update state variables when config is loaded
+  useEffect(() => {
+    console.log('Config updated, applying to state variables:', config);
+    
+    // Handle openWebUIUrl
+    if (!localStorage.getItem('openWebUIUrl') && config.openWebUIUrl) {
+      setOpenWebUIUrl(config.openWebUIUrl);
+      localStorage.setItem('openWebUIUrl', config.openWebUIUrl);
+      console.log('Set openWebUIUrl from config:', config.openWebUIUrl);
+    }
+    
+    // Handle apiKey
+    if (!localStorage.getItem('apiKey') && config.apiKey) {
+      setApiKey(config.apiKey);
+      localStorage.setItem('apiKey', config.apiKey);
+      console.log('Set apiKey from config');
+    }
+    
+    // Handle selectedModel
+    if (!localStorage.getItem('selectedModel') && config.selectedModel) {
+      setSelectedModel(config.selectedModel);
+      localStorage.setItem('selectedModel', config.selectedModel);
+      console.log('Set selectedModel from config:', config.selectedModel);
+    }
+  }, [config]);
+
+  // This useEffect is no longer needed as we're handling this in the config loading useEffect
+  // useEffect(() => {
+  //   const storedOpenWebUIUrl = localStorage.getItem('openWebUIUrl');
+  //   const storedApiKey = localStorage.getItem('apiKey');
+  //   const storedSelectedModel = localStorage.getItem('selectedModel');
+
+  //   if (storedOpenWebUIUrl) {
+  //     setOpenWebUIUrl(storedOpenWebUIUrl);
+  //   } else {
+  //     localStorage.setItem('openWebUIUrl', config.openWebUIUrl);
+  //   }
+
+  //   if (storedApiKey) {
+  //     setApiKey(storedApiKey);
+  //   } else {
+  //     localStorage.setItem('apiKey', config.apiKey);
+  //   }
+
+  //   if (storedSelectedModel) {
+  //     setSelectedModel(storedSelectedModel);
+  //   } else {
+  //     localStorage.setItem('selectedModel', config.selectedModel);
+  //   }
+  // }, []);
 
   useEffect(() => {
     const initialize = async () => {
@@ -182,9 +229,11 @@ function App() {
   };
 
   const handleLoadDefaultSettings = () => {
+    // Use the dynamically loaded config
     setOpenWebUIUrl(config.openWebUIUrl);
     setApiKey(config.apiKey);
     setSelectedModel(config.selectedModel);
+    console.log('Loaded default settings from config:', config);
   };
 
   const handleClearChat = () => {

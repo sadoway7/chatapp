@@ -1,4 +1,5 @@
 This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+The content has been processed where content has been compressed (code blocks are separated by ⋮---- delimiter).
 
 ================================================================
 File Summary
@@ -38,6 +39,7 @@ Notes:
 - Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
 - Files matching patterns in .gitignore are excluded
 - Files matching default ignore patterns are excluded
+- Content has been compressed - code blocks are separated by ⋮---- delimiter
 
 Additional Info:
 ----------------
@@ -58,6 +60,7 @@ src/App.jsx
 src/commands.js
 src/components/ChatInput.jsx
 src/components/ChatMessages.jsx
+src/components/FileUpload.jsx
 src/components/Header.jsx
 src/components/SettingsModal.jsx
 src/config.json
@@ -321,680 +324,436 @@ This is a hobby project maintained in my free time. If you find bugs or have que
 ================
 File: src/api/openwebui.js
 ================
-import { handleApiError } from '../utils/error';
-
+export const uploadFile = async (openWebUIUrl, apiKey, file) => {
+console.log('API: uploadFile called with file:', file.name, file.type, file.size);
+console.log('API: Using URL:', `${openWebUIUrl}/api/v1/files/`);
+⋮----
+console.log('API: Using authorization header');
+⋮----
+console.log('API: Creating FormData and appending file');
+const formData = new FormData();
+formData.append('file', file);
+⋮----
+console.log('API: Sending fetch request');
+const response = await fetch(`${openWebUIUrl}/api/v1/files/`, {
+⋮----
+console.log('API: Received response with status:', response.status);
+⋮----
+const errorText = await response.text();
+console.error('API: Error response body:', errorText);
+throw new Error(`Failed to upload file: ${response.status} ${response.statusText}\n${errorText}`);
+⋮----
+const data = await response.json();
+console.log('API: Successfully parsed response:', data);
+⋮----
+console.error('API: Error in uploadFile:', error);
+handleApiError(error, 'uploadFile');
+⋮----
 export const fetchModels = async (openWebUIUrl, apiKey) => {
-  const headers = {
-    'Content-Type': 'application/json',
-  };
-  if (apiKey) {
-    headers['Authorization'] = `Bearer ${apiKey}`;
-  }
-
-  try {
-    const response = await fetch(`${openWebUIUrl}/api/models`, { headers });
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Failed to fetch models: ${response.status} ${response.statusText}\n${errorText}`);
-    }
-    const data = await response.json();
-    if (!data || !Array.isArray(data.data)) {
-      throw new Error('Invalid response format from OpenWebUI API.');
-    }
-    return data.data;
-  } catch (error) {
-    handleApiError(error, 'fetchModels');
-    throw error;
-  }
-};
-
-export const sendChatMessage = async (openWebUIUrl, apiKey, model, messages) => {
-  const headers = {
-    'Content-Type': 'application/json',
-  };
-  if (apiKey) {
-    headers['Authorization'] = `Bearer ${apiKey}`;
-  }
-
-  try {
-    const response = await fetch(`${openWebUIUrl}/api/chat/completions`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ model, messages, stream: false }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Failed to send message: ${response.status} ${response.statusText}\n${errorText}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    handleApiError(error, 'sendChatMessage');
-    throw error;
-  }
-};
+⋮----
+const response = await fetch(`${openWebUIUrl}/api/models`, { headers });
+⋮----
+throw new Error(`Failed to fetch models: ${response.status} ${response.statusText}\n${errorText}`);
+⋮----
+if (!data || !Array.isArray(data.data)) {
+throw new Error('Invalid response format from OpenWebUI API.');
+⋮----
+handleApiError(error, 'fetchModels');
+⋮----
+export const sendChatMessage = async (openWebUIUrl, apiKey, model, messages, fileId = null) => {
+console.log('API: sendChatMessage called with model:', model);
+console.log('API: Messages count:', messages.length);
+console.log('API: File ID:', fileId);
+⋮----
+// Add file reference if provided
+⋮----
+console.log('API: Adding file reference to payload:', fileId);
+⋮----
+console.log('API: Sending chat completion request');
+const response = await fetch(`${openWebUIUrl}/api/chat/completions`, {
+⋮----
+body: JSON.stringify(payload),
+⋮----
+throw new Error(`Failed to send message: ${response.status} ${response.statusText}\n${errorText}`);
+⋮----
+console.log('API: Successfully parsed response');
+⋮----
+console.error('API: Error in sendChatMessage:', error);
+handleApiError(error, 'sendChatMessage');
 
 ================
 File: src/App.jsx
 ================
-import React, { useState, useEffect, useRef } from 'react';
-import Header from './components/Header';
-import ChatInput from './components/ChatInput';
-import ChatMessages from './components/ChatMessages';
-import SettingsModal from './components/SettingsModal';
-import { fetchModels, sendChatMessage } from './api/openwebui';
-import config from './config.json';
-import { handleCommand } from './commands';
-import { handleApiError } from './utils/error';
-import './index.css';
-
 function App() {
-  const [messages, setMessages] = useState([]);
-  const [input, setInput] = useState('');
-  const [showSettings, setShowSettings] = useState(false);
-  const [openWebUIUrl, setOpenWebUIUrl] = useState(localStorage.getItem('openWebUIUrl') || config.openWebUIUrl);
-  const [apiKey, setApiKey] = useState(localStorage.getItem('apiKey') || config.apiKey);
-  const [models, setModels] = useState([]);
-  const [selectedModel, setSelectedModel] = useState(localStorage.getItem('selectedModel') || config.selectedModel);
-  const [fetchError, setFetchError] = useState(null);
-  const [isTyping, setIsTyping] = useState(false);
-  const chatContainerRef = useRef(null);
-
-  useEffect(() => {
-    const storedOpenWebUIUrl = localStorage.getItem('openWebUIUrl');
-    const storedApiKey = localStorage.getItem('apiKey');
-    const storedSelectedModel = localStorage.getItem('selectedModel');
-
-    if (storedOpenWebUIUrl) {
-      setOpenWebUIUrl(storedOpenWebUIUrl);
-    } else {
-      localStorage.setItem('openWebUIUrl', config.openWebUIUrl);
-    }
-
-    if (storedApiKey) {
-      setApiKey(storedApiKey);
-    } else {
-      localStorage.setItem('apiKey', config.apiKey);
-    }
-
-    if (storedSelectedModel) {
-      setSelectedModel(storedSelectedModel);
-    } else {
-      localStorage.setItem('selectedModel', config.selectedModel);
-    }
-  }, []);
-
-  useEffect(() => {
-    const initialize = async () => {
-      if (openWebUIUrl && apiKey && selectedModel) {
-        try {
-          const fetchedModels = await fetchModels(openWebUIUrl, apiKey);
-          setModels(fetchedModels.map(model => model.id));
-        } catch (error) {
-          handleApiError(error, 'Initialization');
-          setFetchError(error.message);
-        }
-      }
-    };
-
-    initialize();
-  }, [openWebUIUrl, apiKey, selectedModel]);
-
-  const handleSend = async () => {
-    if (!input.trim()) return;
-
-    if (input.startsWith('>')) {
-      const command = input.substring(1).trim();
-      handleCommand(command, setInput, setShowSettings);
-      return;
-    }
-
-    const userMessage = {
-      role: 'user',
-      content: input,
-      isOriginalUserMessage: true // Add metadata to identify original user messages
-    };
-    setMessages(prevMessages => [...prevMessages, userMessage]);
-    setInput('');
-    setIsTyping(true);
-
-    try {
-      const response = await sendChatMessage(openWebUIUrl, apiKey, selectedModel, [...messages, userMessage]);
-      if (!response || !response.choices || !response.choices.length || !response.choices[0].message) {
-        throw new Error('Invalid response format from API.');
-      }
-      const assistantMessage = {
-        role: 'assistant',
-        content: response.choices[0].message.content,
-        isResponseToRetry: false
-      };
-      setMessages(prevMessages => [...prevMessages, assistantMessage]);
-    } catch (error) {
-      handleApiError(error, 'handleSendMessage');
-      const errorAssistantMessage = {
-        role: 'assistant',
-        content: 'Failed to get response from API, Check Settings',
-        isResponseToRetry: false
-      };
-      setMessages(prevMessages => [...prevMessages, errorAssistantMessage]);
-    } finally {
-      setIsTyping(false);
-    }
-  };
-
-  const handleSettingsChange = (e) => {
-    const { name, value } = e.target;
-    if (name === 'openWebUIUrl') {
-      setOpenWebUIUrl(value);
-    } else if (name === 'apiKey') {
-      setApiKey(value);
-    } else if (name === 'selectedModel') {
-      setSelectedModel(value);
-    }
-  };
-
-  const handleSaveSettings = async (e) => {
-    e.preventDefault();
-    localStorage.setItem('openWebUIUrl', openWebUIUrl);
-    localStorage.setItem('apiKey', apiKey);
-    localStorage.setItem('selectedModel', selectedModel);
-    setShowSettings(false);
-
-    try {
-      const fetchedModels = await fetchModels(openWebUIUrl, apiKey);
-      setModels(fetchedModels.map(model => model.id));
-      setFetchError(null);
-    } catch (error) {
-      handleApiError(error, 'handleSaveSettings');
-      setFetchError(error.message);
-    }
-  };
-
-  const handleLoadDefaultSettings = () => {
-    setOpenWebUIUrl(config.openWebUIUrl);
-    setApiKey(config.apiKey);
-    setSelectedModel(config.selectedModel);
-  };
-
-  const handleClearChat = () => {
-    setMessages([]);
-  };
-  const handleRetrySend = async (retryMessage, originalUserMessageIndex) => {
-    setIsTyping(true);
-    try {
-      // Get message history up to the retry point
-      const messageHistory = messages.slice(0, -1); // Remove last assistant message
-      
-      // Add our retry prompt with metadata
-      const messagesWithRetry = [...messageHistory, {
-        role: 'user',
-        content: retryMessage,
-        isRetryPrompt: true,
-        originalUserMessageIndex: originalUserMessageIndex
-      }];
-      
-      // Log for debugging
-      console.log('Sending retry with original message index:', originalUserMessageIndex);
-      
-      const response = await sendChatMessage(openWebUIUrl, apiKey, selectedModel, messagesWithRetry);
-      if (!response || !response.choices || !response.choices.length || !response.choices[0].message) {
-        throw new Error('Invalid response format from API.');
-      }
-      const assistantMessage = {
-        role: 'assistant',
-        content: response.choices[0].message.content,
-        isResponseToRetry: messagesWithRetry.some(msg => msg.isRetryPrompt)
-      };
-      setMessages(prevMessages => [...prevMessages, assistantMessage]);
-    } catch (error) {
-      handleApiError(error, 'handleSendMessage');
-      const errorAssistantMessage = {
-        role: 'assistant',
-        content: 'Failed to get response from API, Check Settings',
-        isResponseToRetry: true
-      };
-      setMessages(prevMessages => [...prevMessages, errorAssistantMessage]);
-    } finally {
-      setIsTyping(false);
-    }
-  };
-
-  const handleRetry = (index) => {
-    console.log('Retry clicked for message at index:', index);
-    
-    // Find the original user message this assistant is responding to
-    let originalUserMessageIndex = -1;
-    let originalUserMessage = '';
-    
-    // Check if the previous message is a retry prompt
-    if (index > 0 && messages[index-1].role === 'user' && messages[index-1].isRetryPrompt) {
-      // If it's a retry prompt, use its originalUserMessageIndex
-      originalUserMessageIndex = messages[index-1].originalUserMessageIndex;
-      if (originalUserMessageIndex !== undefined && messages[originalUserMessageIndex]) {
-        originalUserMessage = messages[originalUserMessageIndex].content;
-        console.log('Found original message via retry prompt metadata:', originalUserMessageIndex);
-      }
-    }
-    
-    // If we couldn't find the original message via metadata, search for it
-    if (originalUserMessageIndex === -1 || !originalUserMessage) {
-      let userMessageIndex = index - 1;
-      while (userMessageIndex >= 0) {
-        if (messages[userMessageIndex].role === 'user' && messages[userMessageIndex].isOriginalUserMessage) {
-          originalUserMessage = messages[userMessageIndex].content;
-          originalUserMessageIndex = userMessageIndex;
-          console.log('Found original message by searching:', originalUserMessageIndex);
-          break;
-        }
-        userMessageIndex--;
-      }
-    }
-    
-    // If we still couldn't find an original user message, use the most recent user message
-    if (originalUserMessageIndex === -1 || !originalUserMessage) {
-      let userMessageIndex = index - 1;
-      while (userMessageIndex >= 0) {
-        if (messages[userMessageIndex].role === 'user') {
-          originalUserMessage = messages[userMessageIndex].content;
-          originalUserMessageIndex = userMessageIndex;
-          console.log('Falling back to most recent user message:', originalUserMessageIndex);
-          break;
-        }
-        userMessageIndex--;
-      }
-    }
-    
-    if (originalUserMessageIndex >= 0 && originalUserMessage) {
-      console.log('Creating retry prompt for original message:', originalUserMessage);
-      
-      const retryMessage = `Acknowledge that your previous response wasn't satisfactory and provide a new, different response to the user's question. Take a different approach this time by:
-  1. Using a different perspective or methodology
-  2. Providing more specific examples or details
-  3. Breaking down the explanation in a clearer way
-  4. Being more direct and concise
-  5. you may get this message again, you need to have a different response each time
-  
-  Important: Do not repeat content from your previous response. Focus on giving a fresh, alternative answer that might better address what the user is looking for.
-  
-  Original user message: ${originalUserMessage}`;
-      
-      handleRetrySend(retryMessage, originalUserMessageIndex);
-    } else {
-      console.error('Could not find original user message to retry');
-    }
-  };
-
-  useEffect(() => {
-    chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
-    
-    const handleResize = () => {
-      document.body.style.height = `${window.innerHeight}px`;
-    };
-
-    handleResize(); // Set initial height
-    
-    window.addEventListener('resize', handleResize);
-    
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
-  }, [messages]);
-
-  return (
-    <div className="container">
-      <Header setShowSettings={setShowSettings} handleClearChat={handleClearChat} showSettings={showSettings} />
-      {fetchError && <div className="error-message">{fetchError}</div>}
-      <ChatMessages messages={messages} chatContainerRef={chatContainerRef} isTyping={isTyping} handleRetry={handleRetry} />
-      <ChatInput input={input} setInput={setInput} handleSend={handleSend} models={models} selectedModel={selectedModel} setSelectedModel={setSelectedModel} />
-      {showSettings && (
-        <div className="settings-modal">
-          <SettingsModal
-            showSettings={showSettings}
-            setShowSettings={setShowSettings}
-            openWebUIUrl={openWebUIUrl}
-            setOpenWebUIUrl={setOpenWebUIUrl}
-            apiKey={apiKey}
-            setApiKey={setApiKey}
-            selectedModel={selectedModel}
-            setSelectedModel={setSelectedModel}
-            models={models}
-            handleSaveSettings={handleSaveSettings}
-            handleLoadDefaultSettings={handleLoadDefaultSettings}
-          />
-        </div>
-      )}
-    </div>
-  );
-}
-
-export default App;
+const [messages, setMessages] = useState([]);
+const [input, setInput] = useState('');
+const [showSettings, setShowSettings] = useState(false);
+const [openWebUIUrl, setOpenWebUIUrl] = useState(localStorage.getItem('openWebUIUrl') || config.openWebUIUrl);
+const [apiKey, setApiKey] = useState(localStorage.getItem('apiKey') || config.apiKey);
+const [models, setModels] = useState([]);
+const [selectedModel, setSelectedModel] = useState(localStorage.getItem('selectedModel') || config.selectedModel);
+const [fetchError, setFetchError] = useState(null);
+const [isTyping, setIsTyping] = useState(false);
+const [uploadedFile, setUploadedFile] = useState(null);
+const [fileId, setFileId] = useState(null);
+const [isUploading, setIsUploading] = useState(false);
+const [fileError, setFileError] = useState(null);
+const chatContainerRef = useRef(null);
+⋮----
+useEffect(() => {
+const storedOpenWebUIUrl = localStorage.getItem('openWebUIUrl');
+const storedApiKey = localStorage.getItem('apiKey');
+const storedSelectedModel = localStorage.getItem('selectedModel');
+⋮----
+setOpenWebUIUrl(storedOpenWebUIUrl);
+⋮----
+localStorage.setItem('openWebUIUrl', config.openWebUIUrl);
+⋮----
+setApiKey(storedApiKey);
+⋮----
+localStorage.setItem('apiKey', config.apiKey);
+⋮----
+setSelectedModel(storedSelectedModel);
+⋮----
+localStorage.setItem('selectedModel', config.selectedModel);
+⋮----
+const initialize = async () => {
+⋮----
+const fetchedModels = await fetchModels(openWebUIUrl, apiKey);
+setModels(fetchedModels.map(model => model.id));
+⋮----
+handleApiError(error, 'Initialization');
+setFetchError(error.message);
+⋮----
+initialize();
+⋮----
+const handleFileUpload = async (file) => {
+console.log('App: handleFileUpload called with file:', file.name, file.type, file.size);
+setUploadedFile(file);
+setIsUploading(true);
+setFileError(null); // Clear any previous errors
+⋮----
+console.log('App: Uploading file to API...');
+const response = await uploadFile(openWebUIUrl, apiKey, file);
+console.log('App: File uploaded successfully:', response);
+setFileId(response.id);
+⋮----
+console.error('App: Error uploading file:', error);
+setFileError('Failed to upload file. Please try again.');
+setUploadedFile(null);
+⋮----
+console.log('App: Upload process completed');
+setIsUploading(false);
+⋮----
+const handleFileRemove = () => {
+console.log('App: Removing file');
+⋮----
+setFileId(null);
+setFileError(null);
+⋮----
+const handleFileError = (errorMessage) => {
+console.log('App: File error:', errorMessage);
+setFileError(errorMessage);
+⋮----
+const handleSend = async () => {
+if (!input.trim()) return;
+⋮----
+if (input.startsWith('>')) {
+const command = input.substring(1).trim();
+handleCommand(command, setInput, setShowSettings);
+⋮----
+isOriginalUserMessage: true, // Add metadata to identify original user messages
+hasAttachment: !!fileId, // Add flag to indicate if message has a file attachment
+attachmentName: uploadedFile ? uploadedFile.name : null // Add the file name for display
+⋮----
+setMessages(prevMessages => [...prevMessages, userMessage]);
+setInput('');
+setIsTyping(true);
+⋮----
+// Clear the file immediately after sending
+const tempFileId = fileId; // Store fileId temporarily for the API call
+⋮----
+const response = await sendChatMessage(
+⋮----
+tempFileId // Pass the temporary file ID if available
+⋮----
+throw new Error('Invalid response format from API.');
+⋮----
+setMessages(prevMessages => [...prevMessages, assistantMessage]);
+⋮----
+handleApiError(error, 'handleSendMessage');
+⋮----
+setMessages(prevMessages => [...prevMessages, errorAssistantMessage]);
+⋮----
+setIsTyping(false);
+⋮----
+const handleSettingsChange = (e) => {
+⋮----
+setOpenWebUIUrl(value);
+⋮----
+setApiKey(value);
+⋮----
+setSelectedModel(value);
+⋮----
+const handleSaveSettings = async (e) => {
+e.preventDefault();
+localStorage.setItem('openWebUIUrl', openWebUIUrl);
+localStorage.setItem('apiKey', apiKey);
+localStorage.setItem('selectedModel', selectedModel);
+setShowSettings(false);
+⋮----
+setFetchError(null);
+⋮----
+handleApiError(error, 'handleSaveSettings');
+⋮----
+const handleLoadDefaultSettings = () => {
+setOpenWebUIUrl(config.openWebUIUrl);
+setApiKey(config.apiKey);
+setSelectedModel(config.selectedModel);
+⋮----
+const handleClearChat = () => {
+setMessages([]);
+⋮----
+const handleRetrySend = async (retryMessage, originalUserMessageIndex) => {
+⋮----
+// Get message history up to the retry point
+const messageHistory = messages.slice(0, -1); // Remove last assistant message
+⋮----
+// Add our retry prompt with metadata
+⋮----
+// Log for debugging
+console.log('Sending retry with original message index:', originalUserMessageIndex);
+⋮----
+const response = await sendChatMessage(openWebUIUrl, apiKey, selectedModel, messagesWithRetry);
+⋮----
+isResponseToRetry: messagesWithRetry.some(msg => msg.isRetryPrompt)
+⋮----
+const handleRetry = (index) => {
+console.log('Retry clicked for message at index:', index);
+⋮----
+// Find the original user message this assistant is responding to
+⋮----
+// Check if the previous message is a retry prompt
+⋮----
+// If it's a retry prompt, use its originalUserMessageIndex
+⋮----
+console.log('Found original message via retry prompt metadata:', originalUserMessageIndex);
+⋮----
+// If we couldn't find the original message via metadata, search for it
+⋮----
+console.log('Found original message by searching:', originalUserMessageIndex);
+⋮----
+// If we still couldn't find an original user message, use the most recent user message
+⋮----
+console.log('Falling back to most recent user message:', originalUserMessageIndex);
+⋮----
+console.log('Creating retry prompt for original message:', originalUserMessage);
+⋮----
+handleRetrySend(retryMessage, originalUserMessageIndex);
+⋮----
+console.error('Could not find original user message to retry');
+⋮----
+const handleResize = () => {
+⋮----
+handleResize(); // Set initial height
+⋮----
+window.addEventListener('resize', handleResize);
+⋮----
+window.removeEventListener('resize', handleResize);
 
 ================
 File: src/commands.js
 ================
 export const handleCommand = (command, setInput, setShowSettings) => {
-  switch (command) {
-    case 'settings':
-      setShowSettings(true);
-      break;
-    // Add more commands here if needed
-    default:
-      console.log(`Unknown command: ${command}`);
-  }
-  setInput(''); // Clear the input field after handling a command
-};
+⋮----
+setShowSettings(true);
+⋮----
+// Add more commands here if needed
+⋮----
+console.log(`Unknown command: ${command}`);
+⋮----
+setInput(''); // Clear the input field after handling a command
 
 ================
 File: src/components/ChatInput.jsx
 ================
-import React, { useRef, useEffect, useState } from 'react';
-import { FiSend, FiChevronDown, FiChevronUp } from 'react-icons/fi';
-
 const ChatInput = ({
-  input,
-  setInput,
-  handleSend,
-  selectedModel,
-  setSelectedModel,
-  models = []
-}) => {
-  const textareaRef = useRef(null);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const dropdownRef = useRef(null);
-
-  // Auto-resize the textarea based on content
-  useEffect(() => {
-    if (textareaRef.current) {
-      // Reset height to auto to get the correct scrollHeight
-      textareaRef.current.style.height = 'auto';
-      
-      // Calculate new height (capped at 4 lines)
-      const lineHeight = 24; // Approximate line height in pixels
-      const maxHeight = lineHeight * 4; // Max height for 4 lines
-      const scrollHeight = textareaRef.current.scrollHeight;
-      
-      // Set the height to either the scrollHeight or maxHeight, whichever is smaller
-      textareaRef.current.style.height = `${Math.min(scrollHeight, maxHeight)}px`;
-    }
-  }, [input]);
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setDropdownOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
-
-  const handleKeyDown = (e) => {
-    // Send message on Enter (without Shift key)
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault(); // Prevent default to avoid new line
-      handleSend();
-    }
-  };
-
-  const toggleDropdown = () => {
-    setDropdownOpen(!dropdownOpen);
-  };
-
-  const selectModel = (model) => {
-    setSelectedModel(model);
-    setDropdownOpen(false);
-  };
-
-  return (
-    <div className="chat-input-container">
-      <div className="input-row">
-        <textarea
-          ref={textareaRef}
-          className="chat-input"
-          placeholder="Type your message..."
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          rows="1"
-        />
-      </div>
-      <div className="input-footer">
-        {models.length > 0 && (
-          <div className="custom-dropdown" ref={dropdownRef}>
-            <button
-              className="dropdown-toggle"
-              onClick={toggleDropdown}
-              title="Select AI Model"
-            >
-              {selectedModel} {dropdownOpen ? <FiChevronUp /> : <FiChevronDown />}
-            </button>
-            {dropdownOpen && (
-              <div className="dropdown-menu">
-                {models.map(model => (
-                  <button
-                    key={model}
-                    className={`dropdown-item ${model === selectedModel ? 'active' : ''}`}
-                    onClick={() => selectModel(model)}
-                  >
-                    {model}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-        <button className="send-button" onClick={handleSend}>
-          <FiSend />
-        </button>
-      </div>
-    </div>
-  );
-};
-
-export default ChatInput;
+⋮----
+const textareaRef = useRef(null);
+const [dropdownOpen, setDropdownOpen] = useState(false);
+const dropdownRef = useRef(null);
+⋮----
+// Auto-resize the textarea based on content
+useEffect(() => {
+⋮----
+// Reset height to auto to get the correct scrollHeight
+⋮----
+// Calculate new height (capped at 4 lines)
+const lineHeight = 24; // Approximate line height in pixels
+const maxHeight = lineHeight * 4; // Max height for 4 lines
+⋮----
+// Set the height to either the scrollHeight or maxHeight, whichever is smaller
+textareaRef.current.style.height = `${Math.min(scrollHeight, maxHeight)}px`;
+⋮----
+// Close dropdown when clicking outside
+⋮----
+const handleClickOutside = (event) => {
+if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+setDropdownOpen(false);
+⋮----
+document.addEventListener('mousedown', handleClickOutside);
+⋮----
+document.removeEventListener('mousedown', handleClickOutside);
+⋮----
+const handleKeyDown = (e) => {
+// Send message on Enter (without Shift key)
+⋮----
+e.preventDefault(); // Prevent default to avoid new line
+handleSend();
+⋮----
+const toggleDropdown = () => {
+setDropdownOpen(!dropdownOpen);
+⋮----
+const selectModel = (model) => {
+setSelectedModel(model);
+⋮----
+onChange={(e) => setInput(e.target.value)}
+⋮----
+{models.map(model => (
+⋮----
+onClick={() => selectModel(model)}
 
 ================
 File: src/components/ChatMessages.jsx
 ================
-import React from 'react';
-import { FiCopy, FiRefreshCw } from 'react-icons/fi';
-import { getSafeMessageContent } from '../utils/message.jsx';
-
 const ChatMessages = ({ messages, chatContainerRef, isTyping, handleRetry }) => {
-  const [showCopyMessage, setShowCopyMessage] = React.useState(false);
-  // Add ref for the message container
-  const copyMessageRef = React.useRef(null);
+const [showCopyMessage, setShowCopyMessage] = React.useState(false);
+// Add ref for the message container
+const copyMessageRef = React.useRef(null);
+⋮----
+React.useEffect(() => {
+⋮----
+// Ensure the message is visible by scrolling into view
+⋮----
+copyMessageRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+⋮----
+timeoutId = setTimeout(() => {
+setShowCopyMessage(false);
+⋮----
+return () => clearTimeout(timeoutId);
+⋮----
+const handleCopyMessage = (content) => {
+navigator.clipboard.writeText(content)
+.then(() => {
+setShowCopyMessage(true);
+console.log('Text copied to clipboard:', content);
+⋮----
+.catch(err => {
+console.error('Failed to copy text:', err);
+⋮----
+{/* Move copy message outside the scrollable container */}
+⋮----
+{messages.map((message, index) => (
+⋮----
+<div className="message-content">{getSafeMessageContent(message.content)}</div>
+⋮----
+onClick={() => handleCopyMessage(message.content)}
+⋮----
+onClick={() => handleRetry(index)}
 
-  React.useEffect(() => {
-    let timeoutId;
-    if (showCopyMessage) {
-      // Ensure the message is visible by scrolling into view
-      if (copyMessageRef.current) {
-        copyMessageRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-      timeoutId = setTimeout(() => {
-        setShowCopyMessage(false);
-      }, 1500);
-    }
-    return () => clearTimeout(timeoutId);
-  }, [showCopyMessage]);
-
-  const handleCopyMessage = (content) => {
-    navigator.clipboard.writeText(content)
-      .then(() => {
-        setShowCopyMessage(true);
-        console.log('Text copied to clipboard:', content);
-      })
-      .catch(err => {
-        console.error('Failed to copy text:', err);
-      });
-  };
-
-  return (
-    <>
-      {/* Move copy message outside the scrollable container */}
-      {showCopyMessage && (
-        <div className="copy-message" ref={copyMessageRef}>
-          Copied!
-        </div>
-      )}
-      
-      <div className="chat-messages" ref={chatContainerRef}>
-        {messages.map((message, index) => (
-          <div key={index} className={`message ${message.role === 'user' ? 'user-message' : 'assistant-message'}`}>
-            <div className="message-content">{getSafeMessageContent(message.content)}</div>
-            {message.role === 'assistant' && typeof message.content === 'string' && (
-              <div className="message-actions-container">
-                <div className="message-actions">
-                  <button 
-                    className="copy-button" 
-                    onClick={() => handleCopyMessage(message.content)}
-                    aria-label="Copy message"
-                  >
-                    <FiCopy />
-                  </button>
-                  <button 
-                    className="retry-button" 
-                    onClick={() => handleRetry(index)}
-                    aria-label="Retry message"
-                  >
-                    <FiRefreshCw />
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        ))}
-        {isTyping && (
-          <div className="typing-indicator">
-            <span></span>
-            <span></span>
-            <span></span>
-          </div>
-        )}
-      </div>
-    </>
-  );
-};
-
-export default ChatMessages;
+================
+File: src/components/FileUpload.jsx
+================
+// Constants
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+⋮----
+// Document formats
+⋮----
+// Image formats
+⋮----
+const FileUpload = ({ onFileUpload, onFileRemove, uploadedFile, isUploading, onError }) => {
+const fileInputRef = useRef(null);
+⋮----
+const handleFileSelect = () => {
+console.log('File select button clicked');
+fileInputRef.current.click();
+⋮----
+const handleFileChange = (e) => {
+console.log('File input changed', e.target.files);
+⋮----
+console.log('File selected:', file.name, file.type, file.size);
+⋮----
+// Check file size
+⋮----
+console.log('File too large:', file.size);
+onError(`File size exceeds the 10MB limit. Your file is ${(file.size / (1024 * 1024)).toFixed(2)}MB.`);
+⋮----
+// Check file type (by extension)
+const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
+console.log('File extension:', fileExtension);
+if (!ALLOWED_FILE_TYPES.includes(fileExtension)) {
+console.log('File type not supported:', fileExtension);
+onError(`File type not supported. Allowed types: ${ALLOWED_FILE_TYPES.join(', ')}`);
+⋮----
+console.log('File passed validation, uploading...');
+onFileUpload(file);
+⋮----
+// Function to get appropriate icon based on file type
+const getFileIcon = (fileName) => {
+const extension = fileName.split('.').pop().toLowerCase();
+⋮----
+// Return appropriate icon based on file type
+⋮----
+accept={ALLOWED_FILE_TYPES.join(',')}
+⋮----
+<span className="file-icon">{getFileIcon(uploadedFile.name)}</span>
+⋮----
+? uploadedFile.name.substring(0, 12) + '...'
+⋮----
+{uploadedFile && uploadedFile.type.startsWith('image/') && (
+⋮----
+src={URL.createObjectURL(uploadedFile)}
 
 ================
 File: src/components/Header.jsx
 ================
-import React from 'react';
-import { FiSettings } from 'react-icons/fi';
-
-const Header = ({ handleClearChat, setShowSettings }) => {
-  return (
-    <div className="chat-header">
-      <div className="logo-container">
-        <svg className="logo-svg" width="32" height="32" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-          {/* Dark background circle */}
-          <circle cx="50" cy="50" r="48" fill="#1a1a1a" />
-          
-          {/* Geometric pattern - inspired by the examples but simplified */}
-          <g fill="#ffffff">
-            {/* Center circle */}
-            <circle cx="50" cy="50" r="8" />
-            
-            {/* Chunky rays - 8 directions */}
-            <rect x="46" y="15" width="8" height="25" />
-            <rect x="46" y="60" width="8" height="25" />
-            
-            <rect x="15" y="46" width="25" height="8" />
-            <rect x="60" y="46" width="25" height="8" />
-            
-            {/* Diagonal rays */}
-            <rect x="25" y="25" width="8" height="20" transform="rotate(-45 25 25)" />
-            <rect x="75" y="25" width="8" height="20" transform="rotate(45 75 25)" />
-            <rect x="25" y="75" width="8" height="20" transform="rotate(-135 25 75)" />
-            <rect x="75" y="75" width="8" height="20" transform="rotate(135 75 75)" />
-            
-            {/* Outer ring segments */}
-            <path d="M50 10 A40 40 0 0 1 90 50 L82 50 A32 32 0 0 0 50 18 Z" />
-            <path d="M90 50 A40 40 0 0 1 50 90 L50 82 A32 32 0 0 0 82 50 Z" />
-            <path d="M50 90 A40 40 0 0 1 10 50 L18 50 A32 32 0 0 0 50 82 Z" />
-            <path d="M10 50 A40 40 0 0 1 50 10 L50 18 A32 32 0 0 0 18 50 Z" />
-          </g>
-        </svg>
-        <h2 className="logo-text">chat<span className="logo-dot">.</span>sadoway</h2>
-      </div>
-      <div className="header-buttons">
-        <button className="clear-button" onClick={handleClearChat}> {/* Erase button first */}
-          Clear
-        </button>
-        <button className="settings-button" onClick={() => setShowSettings(prev => !prev)}> {/* Then settings button */}
-          <FiSettings />
-        </button>
-      </div>
-    </div>
-  );
-};
-
-export default Header;
+const Header = ({ handleClearChat }) => {
+⋮----
+{/* Dark background circle */}
+⋮----
+{/* Geometric pattern - inspired by the examples but simplified */}
+⋮----
+{/* Center circle */}
+⋮----
+{/* Chunky rays - 8 directions */}
+⋮----
+{/* Diagonal rays */}
+⋮----
+{/* Outer ring segments */}
 
 ================
 File: src/components/SettingsModal.jsx
 ================
-import React from 'react';
-
 const SettingsModal = ({
-  showSettings,
-  setShowSettings,
-  openWebUIUrl,
-  setOpenWebUIUrl,
-  apiKey,
-  setApiKey,
-  selectedModel,
-  setSelectedModel,
-  models,
-  handleSaveSettings,
-  handleLoadDefaultSettings,
-}) => {
-  if (!showSettings) {
-    return null;
-  }
-
-  return (
-    <div className="settings-modal">
-      <div className="settings-content"> {/* Added a container for content */}
-        <h3>Settings</h3>
-        <form className="settings-form" onSubmit={handleSaveSettings}>
-          <div className="input-group"> {/* Group URL input */}
-            <label htmlFor="openWebUIUrl">API URL:</label>
-            <input type="text" id="openWebUIUrl" name="openWebUIUrl" value={openWebUIUrl} onChange={(e) => setOpenWebUIUrl(e.target.value)} />
-          </div>
-
-          <div className="input-group"> {/* Group API Key input */}
-            <label htmlFor="apiKey">API Key:</label>
-            <input type="password" id="apiKey" name="apiKey" value={apiKey} onChange={(e) => setApiKey(e.target.value)} />
-          </div>
-
-          <div className="input-group"> {/* Group Model select */}
-            <label htmlFor="selectedModel">Model:</label>
-            <select id="selectedModel" name="selectedModel" value={selectedModel} onChange={(e) => setSelectedModel(e.target.value)}>
-              {models.map(model => <option key={model} value={model}>{model}</option>)}
-            </select>
-          </div>
-
-          <div className="button-group"> {/* Group buttons */}
-            <button type="button" onClick={handleLoadDefaultSettings}>Load Defaults</button>
-            <button type="submit">Save</button>
-          </div>
-        </form>
-        <button className="close-button" onClick={() => setShowSettings(false)}>Close Without Saving</button>
-      </div>
-    </div>
-  );
-};
-
-export default SettingsModal;
+⋮----
+<div className="settings-content"> {/* Added a container for content */}
+⋮----
+<div className="input-group"> {/* Group URL input */}
+⋮----
+<input type="text" id="openWebUIUrl" name="openWebUIUrl" value={openWebUIUrl} onChange={(e) => setOpenWebUIUrl(e.target.value)} />
+⋮----
+<div className="input-group"> {/* Group API Key input */}
+⋮----
+<input type="password" id="apiKey" name="apiKey" value={apiKey} onChange={(e) => setApiKey(e.target.value)} />
+⋮----
+<div className="input-group"> {/* Group Model select */}
+⋮----
+<select id="selectedModel" name="selectedModel" value={selectedModel} onChange={(e) => setSelectedModel(e.target.value)}>
+{models.map(model => <option key={model} value={model}>{model}</option>)}
+⋮----
+<div className="button-group"> {/* Group buttons */}
+⋮----
+<button className="close-button" onClick={() => setShowSettings(false)}>Close Without Saving</button>
 
 ================
 File: src/config.json
@@ -1063,13 +822,22 @@ File: src/index.css
 body {
   font-family: sans-serif;
   background-color: #e8e8e8;
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.01) 0%, rgba(255, 255, 255, 0) 20%),
+    radial-gradient(circle at 70% 60%, rgba(255, 255, 255, 0.01) 0%, rgba(255, 255, 255, 0) 20%),
+    radial-gradient(circle at 40% 80%, rgba(255, 255, 255, 0.01) 0%, rgba(255, 255, 255, 0) 30%),
+    radial-gradient(circle at 80% 10%, rgba(255, 255, 255, 0.01) 0%, rgba(255, 255, 255, 0) 30%),
+    radial-gradient(circle at 10% 90%, rgba(255, 255, 255, 0.01) 0%, rgba(255, 255, 255, 0) 20%),
+    radial-gradient(circle at 90% 80%, rgba(255, 255, 255, 0.01) 0%, rgba(255, 255, 255, 0) 20%),
+    radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.01) 0%, rgba(255, 255, 255, 0) 30%),
+    radial-gradient(circle at 60% 40%, rgba(255, 255, 255, 0.01) 0%, rgba(255, 255, 255, 0) 30%);
   color: #333;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   height: 100vh;
   position: fixed;
-    width: 100%;
+  width: 100%;
 }
 
 /* Layout */
@@ -1324,23 +1092,29 @@ body {
   margin-top: 8px;
   margin-bottom: 16px;
   font-size: 1.1rem;
-  border-radius: 18px 4px 18px 18px; /* More modern asymmetric corners */
+  border-radius: 18px 4px 18px 18px; /* Asymmetric corners for character */
   box-shadow:
-    0 2px 8px rgba(0, 0, 0, 0.06),
-    0 4px 12px rgba(0, 0, 0, 0.04),
-    0 1px 4px rgba(0, 0, 0, 0.08);
+    0 2px 4px rgba(0, 0, 0, 0.04),
+    0 4px 12px rgba(0, 0, 0, 0.02),
+    0 8px 24px rgba(0, 0, 0, 0.01),
+    0 0 0 1px rgba(0, 0, 0, 0.02);
   animation: popInuser 0.3s ease forwards;
-  background: linear-gradient(160deg, #ffffff, #f8f8f8);
-  border: 1px solid rgba(0, 0, 0, 0.04); /* Subtle border */
+  background: linear-gradient(135deg, #ffffff, #f8f8f8);
+  border-top: 1px solid rgba(255, 255, 255, 0.8); /* Light top border for depth */
   color: rgba(0, 0, 0, 0.85); /* Slightly softer than pure black */
   letter-spacing: 0.01em; /* Subtle letter spacing for better readability */
   transition: box-shadow 0.2s ease, transform 0.2s ease;
+  position: relative;
+  overflow: hidden;
 }
+
+/* Removed blue dot as requested */
 
 .user-message:hover {
   box-shadow:
-    0 3px 10px rgba(0, 0, 0, 0.08),
-    0 6px 16px rgba(0, 0, 0, 0.06);
+    0 4px 8px rgba(0, 0, 0, 0.06),
+    0 8px 16px rgba(0, 0, 0, 0.04),
+    0 0 0 1px rgba(0, 0, 0, 0.02);
   transform: translateY(-1px); /* Subtle lift effect on hover */
 }
 
@@ -1356,34 +1130,49 @@ body {
 }
 
 .assistant-message {
-  background-color: #ffffff;
+  background-color: #f2f2f2;
   padding-top: 20px;
   align-self: flex-start;
   color: rgba(0, 0, 0, 0.85); /* Slightly softer than pure black */
   margin-left: 16px;
   margin-top: 5px;
-  margin-bottom: 45px; /* Increased to provide more space for the action buttons */
+  margin-bottom: 55px; /* Further increased to provide more space for the action buttons */
   font-size: 1.1rem;
-  border-radius: 4px 18px 18px 18px; /* More modern asymmetric corners, mirroring user message */
-  border-left: 3px solid #ff9800;
+  border-radius: 4px 18px 18px 18px; /* Asymmetric corners for character */
   position: relative;
   animation: popInassistant 0.2s ease forwards;
   box-shadow:
-    0 2px 8px rgba(255, 152, 0, 0.06),
+    0 2px 4px rgba(0, 0, 0, 0.06),
     0 4px 12px rgba(0, 0, 0, 0.04),
-    0 8px 16px rgba(255, 152, 0, 0.03);
+    0 8px 24px rgba(0, 0, 0, 0.02),
+    0 0 0 1px rgba(0, 0, 0, 0.03);
   letter-spacing: 0.01em; /* Subtle letter spacing for better readability */
-  background: linear-gradient(170deg, #ffffff, #fefefe); /* Subtle gradient */
-  border-top: 1px solid rgba(255, 152, 0, 0.1); /* Subtle top border */
-  border-right: 1px solid rgba(0, 0, 0, 0.04); /* Subtle right border */
-  border-bottom: 1px solid rgba(0, 0, 0, 0.04); /* Subtle bottom border */
+  border-left: 2px solid rgba(236, 72, 153, 0.2); /* Subtle hint of pink */
   transition: box-shadow 0.2s ease, transform 0.2s ease;
+  background-image:
+    linear-gradient(to bottom right, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0));
+  overflow: hidden;
+}
+
+.assistant-message::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background:
+    radial-gradient(circle at 10% 20%, rgba(236, 72, 153, 0.03), transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(59, 130, 246, 0.03), transparent 50%);
+  opacity: 0.5;
+  pointer-events: none;
 }
 
 .assistant-message:hover {
   box-shadow:
-    0 3px 10px rgba(255, 152, 0, 0.08),
-    0 6px 16px rgba(0, 0, 0, 0.06);
+    0 4px 8px rgba(0, 0, 0, 0.08),
+    0 8px 16px rgba(0, 0, 0, 0.06),
+    0 0 0 1px rgba(0, 0, 0, 0.03);
   transform: translateY(-1px); /* Subtle lift effect on hover */
 }
 
@@ -1411,27 +1200,37 @@ body {
 
 .message-actions-container {
   position: absolute;
-  bottom: -30px;  /* Moved down further from the text */
+  bottom: -35px;  /* Moved down even further from the text */
   left: 10px;  /* Position at the bottom left */
   display: flex;
   flex-direction: row;  /* Changed to row for horizontal layout */
-  border-radius: 24px;
+  border-radius: 12px;
   padding: 6px 10px;
   background-color: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(4px);
   box-shadow:
-    0 2px 6px rgba(0, 0, 0, 0.08),
-    0 4px 12px rgba(0, 0, 0, 0.05);
-  z-index: 50; /* Increased to ensure it appears above all other elements */
-  border: 1px solid rgba(0, 0, 0, 0.04);
+    0 2px 4px rgba(0, 0, 0, 0.06),
+    0 4px 12px rgba(0, 0, 0, 0.04),
+    0 8px 24px rgba(0, 0, 0, 0.02),
+    0 0 0 1px rgba(0, 0, 0, 0.03);
+  z-index: 9000; /* Extremely high z-index to ensure it appears above all other elements */
+  border-left: 2px solid rgba(59, 130, 246, 0.2); /* Subtle hint of blue */
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  background-image: linear-gradient(to right, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.95));
+  pointer-events: auto !important; /* Ensure clicks are registered */
+}
+
+/* Ensure the assistant message doesn't clip the action buttons */
+.assistant-message {
+  overflow: visible !important;
 }
 
 .message-actions-container:hover {
   transform: translateY(-2px);
   box-shadow:
-    0 4px 8px rgba(0, 0, 0, 0.1),
-    0 6px 16px rgba(0, 0, 0, 0.06);
+    0 4px 8px rgba(0, 0, 0, 0.08),
+    0 8px 16px rgba(0, 0, 0, 0.06),
+    0 0 0 1px rgba(0, 0, 0, 0.03);
 }
 
 @media (max-width: 500px) {
@@ -1507,8 +1306,8 @@ body {
 
 .copy-button,
 .retry-button {
-  background-color: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(0, 0, 0, 0.04);
+  background-color: rgba(255, 255, 255, 0.9);
+  border: none;
   border-radius: 50%;
   cursor: pointer;
   padding: 5px;
@@ -1519,11 +1318,45 @@ body {
   height: 28px;
   transition: all 0.2s ease;
   box-shadow:
-    0 2px 6px rgba(0, 0, 0, 0.06),
-    0 1px 3px rgba(0, 0, 0, 0.1);
+    0 2px 4px rgba(0, 0, 0, 0.06),
+    0 4px 8px rgba(0, 0, 0, 0.03),
+    0 0 0 1px rgba(0, 0, 0, 0.02);
   margin: 0 4px; /* Increased horizontal spacing */
   position: relative;
   overflow: hidden;
+}
+
+.copy-button {
+  background-color: rgba(255, 255, 255, 0.9);
+}
+
+.retry-button {
+  background-color: rgba(255, 255, 255, 0.9);
+  position: relative;
+}
+
+.retry-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at top right, rgba(125, 211, 252, 0.15), transparent 70%);
+  opacity: 1;
+  z-index: -1;
+}
+
+.copy-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at top left, rgba(236, 72, 153, 0.15), transparent 70%);
+  opacity: 1;
+  z-index: -1;
 }
 
 .copy-button::after,
@@ -1537,6 +1370,7 @@ body {
   background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 70%);
   opacity: 0;
   transition: opacity 0.3s ease;
+  z-index: 1;
 }
 
 .copy-button:hover,
@@ -1545,7 +1379,8 @@ body {
   transform: translateY(-2px);
   box-shadow:
     0 4px 8px rgba(0, 0, 0, 0.08),
-    0 2px 4px rgba(0, 0, 0, 0.12);
+    0 8px 16px rgba(0, 0, 0, 0.04),
+    0 0 0 1px rgba(0, 0, 0, 0.02);
 }
 
 .copy-button:hover::after,
@@ -1753,40 +1588,48 @@ body {
     align-items: flex-end; /* Changed to flex-end to align items at the bottom */
     position: relative;
     min-height: 34px; /* Further reduced minimum height */
+    margin-bottom: 2px; /* Added small bottom margin */
 }
 
 /* Input footer with model selector and send button */
 .input-footer {
     display: flex;
-    justify-content: space-between;
     align-items: center;
     padding-top: 0px;
-    margin-left: 10px;
-    margin-bottom: 0px;
-    margin-right: 10px;
-    margin-bottom: 0px;
+    margin: 0 6px 4px; /* Added bottom margin */
+    gap: 8px; /* Add gap between elements */
+}
+
+/* Spacer to push elements to the sides */
+.spacer {
+    flex: 1;
 }
 
 /* Custom dropdown styling */
 .custom-dropdown {
     position: relative;
     display: inline-block;
+    margin-right: 4px; /* Add a small margin from the right edge */
+    margin-bottom: 4px; /* Add bottom margin */
 }
 
 .dropdown-toggle {
     background-color: transparent;
     border: none;
     border-radius: 20px;
-    color: #999;
-    font-size: 0.85rem;
-    padding: 8px 7px;
+    color: #777;
+    font-size: 0.8rem;
+    padding: 4px 10px 6px; /* Match file upload button padding */
     cursor: pointer;
     outline: none;
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 6px;
     transition: background-color 0.2s ease;
-    min-width: 150px;
+    min-width: 150px; /* Reduced min-width */
+    text-align: center;
+    height: 28px;
 }
 
 .dropdown-toggle:hover {
@@ -1801,7 +1644,7 @@ body {
     background-color: #2a2a2a;
     border-radius: 20px;
     box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
-    z-index: 30; /* Adjusted to be higher than chat-input-container (20) but lower than message-actions-container (50) */
+    z-index: 110; /* Increased to be higher than send button (101) */
     min-width: 290px;
     overflow: hidden;
     padding: 6px;
@@ -1923,6 +1766,7 @@ body {
     outline: none;
     border-radius: 18px; /* More rounded to match container */
     margin-right: 0; /* No need for margin since send button is now in footer */
+    margin-bottom: 4px; /* Added bottom margin */
     min-width: 0;
     resize: none; /* Prevent manual resizing */
     overflow-y: auto; /* Enable scrolling for content that exceeds max height */
@@ -1962,7 +1806,7 @@ body {
   align-items: center;
   justify-content: center;
   /* margin-bottom: 0px; */
-  margin-right: -8px;
+  margin-right: -1px;
   /* margin-left: 0px; */
   z-index: 101;
   box-shadow: 0 1px 2px rgba(31, 41, 55, 0.04),
@@ -1970,7 +1814,7 @@ body {
               0 3px 6px rgba(31, 41, 55, 0.04),
               0 4px 8px rgba(255, 145, 77, 0.05);
   border: 1px solid rgba(204, 215, 230, 0.8);
-  margin-top: -24px; /* Better alignment with dropdown */
+  margin-top: -29px; /* Better alignment with dropdown */
 }
 
 .send-button:hover {
@@ -1984,115 +1828,201 @@ body {
 /* Settings Modal */
 .settings-modal {
   position: fixed;
-  top: 44%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.3s ease;
+}
+
+/* Settings Content */
+.settings-content {
   background-color: #ffffff;
-  border-radius: 16px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15), 0 3px 8px rgba(0, 0, 0, 0.1);
-  z-index: 5;
+  border-radius: 20px;
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.2),
+    0 5px 15px rgba(0, 0, 0, 0.1),
+    0 0 1px rgba(0, 0, 0, 0.1);
   color: #333;
   width: calc(100% - 40px);
   max-width: 480px;
-  transition: transform 0.2s ease, opacity 0.2s ease;
-  opacity: 1;
-    font-family: 'Inter', sans-serif;
-     font-size: clamp(1.2rem, 2.5vw, 0.8rem);
-  padding: 16px;
+  transition: all 0.3s cubic-bezier(0.19, 1, 0.22, 1);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 0.95rem;
+  overflow: hidden;
+  animation: modalSlideIn 0.3s cubic-bezier(0.19, 1, 0.22, 1);
+  position: relative;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -45%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
 }
 
 .settings-content {
-  background-color: #ffffff;
-  padding: 20px;
-  border-radius: 12px;
-  position: relative;
-  overflow: hidden;
+  padding: 24px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  box-shadow: none;
+  gap: 20px;
+}
+
+.settings-content h3 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 8px;
+  letter-spacing: -0.01em;
 }
 
 .settings-form {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 }
 
 .input-group {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
 
 .input-group label {
   font-weight: 600;
-  font-size: 1.1rem;
-  color: #444;
-  margin-left: 2px;
+  font-size: 0.9rem;
+  color: #555;
+  margin-left: 4px;
+  letter-spacing: 0.01em;
 }
 
 .input-group input,
 .input-group select {
   padding: 12px 16px;
   border-radius: 12px;
-  background-color: #ffffff;
+  background-color: #f8f8f8;
   color: #333;
-  border: 1px solid #ccc;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e0e0e0;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
   transition: all 0.2s ease;
-    font-size: clamp(1.3rem, 2.5vw, 1.2rem);
+  font-size: 0.95rem;
+  font-family: inherit;
 }
 
 .input-group input:focus,
 .input-group select:focus {
   outline: none;
   border-color: #ff9800;
-  box-shadow: 0 0 6px rgba(255, 152, 0, 0.4);
+  background-color: #fff;
+  box-shadow:
+    0 0 0 3px rgba(255, 152, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
 .button-group {
   display: flex;
-  gap: 8px;
-  margin-top: 10px;
+  gap: 12px;
+  margin-top: 16px;
 }
 
-.button-group button,
-.close-button {
-  background-color: #ffa117;
+.button-group button {
+  background-color: #ff9800;
   color: white;
   border: none;
-  padding: 18px 14px;
+  padding: 12px 16px;
   border-radius: 12px;
   cursor: pointer;
   font-weight: 600;
   transition: all 0.2s ease;
   flex: 1;
-    font-size: clamp(1.2rem, 2.5vw, 0.8rem);
+  font-size: 0.95rem;
+  box-shadow:
+    0 1px 3px rgba(255, 152, 0, 0.3),
+    0 1px 2px rgba(0, 0, 0, 0.1);
+  letter-spacing: 0.01em;
 }
 
-.button-group button:hover,
-.close-button:hover {
+.button-group button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 20px rgba(255, 152, 0, 0.3);
+  background-color: #f57c00;
+  box-shadow:
+    0 4px 12px rgba(255, 152, 0, 0.3),
+    0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
-.button-group button:active,
-.close-button:active {
+.button-group button:active {
   transform: translateY(0);
+  background-color: #ef6c00;
+  box-shadow:
+    0 1px 2px rgba(255, 152, 0, 0.3),
+    0 1px 1px rgba(0, 0, 0, 0.1);
 }
 
 .close-button {
-  background-color: #7f8c8d;
+  background-color: #f2f2f2;
+  color: #666;
+  border: none;
+  padding: 12px 16px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  width: 100%;
+  font-size: 0.95rem;
+  margin-top: 8px;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.1),
+    0 1px 2px rgba(0, 0, 0, 0.05);
+  letter-spacing: 0.01em;
 }
 
 .close-button:hover {
-  box-shadow: 0 4px 10px rgba(127, 140, 141, 0.3);
+  background-color: #e6e6e6;
+  color: #555;
+  transform: translateY(-2px);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.1),
+    0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.close-button:active {
+  transform: translateY(0);
+  background-color: #ddd;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.1),
+    0 1px 1px rgba(0, 0, 0, 0.05);
 }
 
 @media (max-width: 480px) {
   .settings-modal {
     width: calc(100% - 24px);
+    max-width: 100%;
+  }
+  
+  .settings-content {
+    padding: 20px;
+  }
+  
+  .button-group {
+    flex-direction: column;
+  }
+  
+  .button-group button,
+  .close-button {
+    padding: 14px 16px;
   }
 }
 
@@ -2101,6 +2031,178 @@ body {
   color: #ff3b30;
   padding: 10px;
   text-align: center;
+}
+
+/* File Upload Styles */
+.file-upload-container {
+  display: flex;
+  align-items: center;
+  position: relative;
+  margin-right: auto; /* Push to the left side */
+  margin-left: 4px; /* Add a small margin from the left edge */
+  margin-bottom: 4px; /* Add bottom margin */
+}
+
+.file-upload-button {
+  background: transparent;
+  border: none;
+  color: #777;
+  cursor: pointer;
+  padding: 4px 8px 6px; /* Added bottom padding */
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  height: 28px;
+  margin-top: 2px; /* Adjust vertical alignment */
+}
+
+.file-upload-button svg {
+  font-size: 1.05rem; /* Slightly more subtle icon size */
+}
+
+.file-upload-button:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: #aaa;
+}
+
+.uploaded-file {
+  display: flex;
+  align-items: center;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 4px 8px;
+  margin-right: 8px;
+}
+
+.file-name {
+  color: #dedede;
+  font-size: 0.85rem;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-icon {
+  margin-right: 4px;
+  font-size: 1rem;
+}
+
+.remove-file-button {
+  background: transparent;
+  border: none;
+  color: #999;
+  cursor: pointer;
+  padding: 4px;
+  margin-left: 4px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.remove-file-button:hover {
+  color: #ff3b30;
+}
+
+.upload-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-top: 2px solid #ffffff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  position: absolute;
+  right: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* File error message styling */
+.file-error-message {
+  background-color: rgba(255, 59, 48, 0.1);
+  color: #ff3b30;
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+  text-align: center;
+  animation: fadeIn 0.3s ease;
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  margin-bottom: 8px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Add indicator for messages with attachments */
+.user-message.has-attachment {
+  position: relative;
+  padding-top: 30px; /* Increased padding to make room for the filename */
+}
+
+.user-message.has-attachment::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 16px;
+  height: 16px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23555' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48'%3E%3C/path%3E%3C/svg%3E");
+  background-size: contain;
+  background-repeat: no-repeat;
+  opacity: 0.8;
+  z-index: 5;
+}
+
+/* Add file name display for messages with attachments */
+.user-message.has-attachment::after {
+  content: attr(data-attachment-name);
+  position: absolute;
+  top: 8px;
+  right: 28px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #555;
+  max-width: 200px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 1;
+  z-index: 5;
+  display: block !important; /* Force display */
+}
+
+.image-preview {
+  position: fixed;
+  bottom: 100px; /* Position above the input container */
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 16px;
+  background-color: #2a2a2a;
+  border-radius: 8px;
+  padding: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  z-index: 40; /* Higher z-index to appear above other elements */
+}
+
+.preview-image {
+  max-width: 150px;
+  max-height: 100px;
+  border-radius: 4px;
 }
 
 /* Footer */
@@ -2144,9 +2246,29 @@ body {
 
 
 
+/* Dark mode styles for user message attachments */
+.user-message.has-attachment::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23dedede' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48'%3E%3C/path%3E%3C/svg%3E");
+}
+
+.user-message.has-attachment::after {
+  color: #dedede;
+  font-weight: 600;
+  display: block !important;
+}
+
 /* Dark Theme Overrides */
 body {
   background-color: #121212; /* Changed from #000000 to very dark gray */
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(30, 30, 30, 0.3) 0%, rgba(30, 30, 30, 0) 20%),
+    radial-gradient(circle at 70% 60%, rgba(30, 30, 30, 0.3) 0%, rgba(30, 30, 30, 0) 20%),
+    radial-gradient(circle at 40% 80%, rgba(30, 30, 30, 0.3) 0%, rgba(30, 30, 30, 0) 30%),
+    radial-gradient(circle at 80% 10%, rgba(30, 30, 30, 0.3) 0%, rgba(30, 30, 30, 0) 30%),
+    radial-gradient(circle at 10% 90%, rgba(30, 30, 30, 0.3) 0%, rgba(30, 30, 30, 0) 20%),
+    radial-gradient(circle at 90% 80%, rgba(30, 30, 30, 0.3) 0%, rgba(30, 30, 30, 0) 20%),
+    radial-gradient(circle at 30% 20%, rgba(30, 30, 30, 0.3) 0%, rgba(30, 30, 30, 0) 30%),
+    radial-gradient(circle at 60% 40%, rgba(30, 30, 30, 0.3) 0%, rgba(30, 30, 30, 0) 30%);
   color: #e5e5e5;
 }
 
@@ -2154,37 +2276,34 @@ body {
 /* The header now uses rgba colors with transparency that work well in both themes */
 
 .user-message {
-  background: linear-gradient(160deg, #2a2a2a, #222222);
+  background: #2a2a2a;
   color: #f0f0f0;
   box-shadow:
-    0 2px 8px rgba(0, 0, 0, 0.2),
-    0 4px 12px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+    0 1px 2px rgba(0, 0, 0, 0.2),
+    0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.03);
 }
 
 .user-message:hover {
   box-shadow:
-    0 3px 10px rgba(0, 0, 0, 0.25),
-    0 6px 16px rgba(0, 0, 0, 0.15);
+    0 2px 4px rgba(0, 0, 0, 0.25),
+    0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .assistant-message {
-  background: linear-gradient(170deg, #222222, #1e1e1e);
+  background: #1e1e1e;
   color: #f0f0f0;
-  border-left: 3px solid #ff9800;
-  border-top: 1px solid rgba(255, 152, 0, 0.1);
-  border-right: 1px solid rgba(255, 255, 255, 0.03);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.03);
   box-shadow:
-    0 2px 8px rgba(0, 0, 0, 0.2),
-    0 4px 12px rgba(0, 0, 0, 0.1);
+    0 1px 2px rgba(0, 0, 0, 0.2),
+    0 2px 8px rgba(0, 0, 0, 0.1);
   /* margin-bottom is inherited from the main styles */
 }
 
 .assistant-message:hover {
   box-shadow:
-    0 3px 10px rgba(0, 0, 0, 0.25),
-    0 6px 16px rgba(0, 0, 0, 0.15);
+    0 2px 4px rgba(0, 0, 0, 0.25),
+    0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .chat-messages::-webkit-scrollbar-thumb {
@@ -2203,27 +2322,46 @@ body {
   background-color: rgba(26, 26, 26, 0.95);
   backdrop-filter: blur(4px);
   box-shadow:
-    0 2px 8px rgba(0, 0, 0, 0.2),
-    0 4px 12px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+    0 2px 4px rgba(0, 0, 0, 0.2),
+    0 4px 12px rgba(0, 0, 0, 0.15),
+    0 8px 24px rgba(0, 0, 0, 0.1),
+    0 0 0 1px rgba(0, 0, 0, 0.3);
+  border-left: 2px solid rgba(59, 130, 246, 0.3); /* Subtle hint of blue */
+  background-image: linear-gradient(to right, rgba(30, 30, 30, 0.8), rgba(26, 26, 26, 0.95));
   /* No need to override position properties as they're inherited from the main styles */
   /* z-index is inherited from the main styles */
+  pointer-events: auto !important; /* Ensure clicks are registered */
+}
+
+/* Ensure the assistant message doesn't clip the action buttons in dark mode */
+.assistant-message {
+  overflow: visible !important;
 }
 
 .message-actions-container:hover {
   transform: translateY(-2px);
   box-shadow:
-    0 4px 10px rgba(0, 0, 0, 0.25),
-    0 6px 16px rgba(0, 0, 0, 0.15);
+    0 4px 8px rgba(0, 0, 0, 0.3),
+    0 8px 16px rgba(0, 0, 0, 0.2),
+    0 0 0 1px rgba(0, 0, 0, 0.3);
 }
 
 .copy-button,
 .retry-button {
-  background-color: rgba(42, 42, 42, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background-color: rgba(42, 42, 42, 0.9);
+  border: none;
   box-shadow:
-    0 2px 6px rgba(0, 0, 0, 0.15),
-    0 1px 3px rgba(0, 0, 0, 0.2);
+    0 2px 4px rgba(0, 0, 0, 0.2),
+    0 4px 8px rgba(0, 0, 0, 0.1),
+    0 0 0 1px rgba(0, 0, 0, 0.3);
+}
+
+.copy-button::before {
+  background: radial-gradient(circle at top left, rgba(236, 72, 153, 0.2), transparent 70%);
+}
+
+.retry-button::before {
+  background: radial-gradient(circle at top right, rgba(125, 211, 252, 0.2), transparent 70%);
 }
 
 .copy-button::after,
@@ -2236,8 +2374,9 @@ body {
   background-color: #333333;
   transform: translateY(-2px);
   box-shadow:
-    0 4px 8px rgba(0, 0, 0, 0.2),
-    0 2px 4px rgba(0, 0, 0, 0.3);
+    0 4px 8px rgba(0, 0, 0, 0.3),
+    0 8px 16px rgba(0, 0, 0, 0.2),
+    0 0 0 1px rgba(0, 0, 0, 0.3);
 }
 
 .copy-button:hover::after,
@@ -2275,16 +2414,16 @@ body {
 /* Dark mode styles for custom dropdown */
 .dropdown-toggle {
   background-color: transparent;
-  margin: 8px 9px;
-  color: #999;
-  margin-top: 0px;      /* Increase to move down */
-  margin-bottom: 8px;   /* Increase to move up */
-  margin-left: -2px;     /* Increase to move right */
-  margin-right: 0px;    /* Increase to move left */
+  margin: 0;
+  color: #777;
+  padding: 4px 10px 6px; /* Match file upload button padding */
+  text-align: center;
+  min-width: 150px; /* Reduced min-width */
 }
 
 .dropdown-toggle:hover {
   background-color: rgba(255, 255, 255, 0.05);
+  color: #aaa;
 }
 
 .dropdown-menu {
@@ -2316,47 +2455,85 @@ body {
   box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
 }
 
+/* Dark mode settings modal */
 .settings-modal {
-  background-color: #222222;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  background-color: rgba(0, 0, 0, 0.7);
 }
 
+/* Dark mode settings content */
 .settings-content {
-  background-color: #222222;
+  background-color: #1e1e1e;
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.4),
+    0 5px 15px rgba(0, 0, 0, 0.3),
+    0 0 1px rgba(255, 255, 255, 0.05);
+  color: #e0e0e0;
+}
+
+.settings-content h3 {
+  color: #f0f0f0;
 }
 
 .input-group label {
-  color: #dedede;
+  color: #aaa;
 }
 
 .input-group input,
 .input-group select {
   background-color: #2a2a2a;
-  color: #dedede;
-  border: 1px solid #111111;
+  color: #e0e0e0;
+  border: 1px solid #333;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .input-group input:focus,
 .input-group select:focus {
-  border-color: #ffffff;
-  box-shadow: 0 0 6px rgba(255, 255, 255, 0.2);
+  border-color: #ff9800;
+  background-color: #333;
+  box-shadow:
+    0 0 0 3px rgba(255, 152, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .button-group button {
-  background-color: #ffffff;
-  color: #000000;
+  background-color: #ff9800;
+  color: #fff;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.3),
+    0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .button-group button:hover {
-  box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
+  background-color: #f57c00;
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.3),
+    0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.button-group button:active {
+  background-color: #ef6c00;
 }
 
 .close-button {
-  background-color: #2a2a2a;
+  background-color: #333;
+  color: #ccc;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.3),
+    0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .close-button:hover {
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  background-color: #444;
+  color: #ddd;
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.3),
+    0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.close-button:active {
+  background-color: #3a3a3a;
 }
 
 .copy-message {
@@ -2368,16 +2545,7 @@ body {
 ================
 File: src/main.jsx
 ================
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import App from './App.jsx';
-import './index.css';
-
 ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-)
 
 ================
 File: src/utils/config.js
@@ -2393,21 +2561,16 @@ File: src/utils/config.js
  *
  * For an overview of all project files, see `src/FILE_MAP.md`.
  */
-
-import config from '../../public/config.json';
-
+⋮----
 export const getDefaultSettings = () => {
-  console.log('Default settings loaded:', config);
-  return config;
-};
+console.log('Default settings loaded:', config);
 
 ================
 File: src/utils/error.js
 ================
 export const handleApiError = (error, source) => {
-  console.error(`API Error in ${source}:`, error);
-  // Consider adding more robust error handling here, such as displaying a user-friendly error message.
-};
+console.error(`API Error in ${source}:`, error);
+// Consider adding more robust error handling here, such as displaying a user-friendly error message.
 
 ================
 File: src/utils/message.js
@@ -2418,77 +2581,36 @@ File: src/utils/message.js
  *
  * For an overview of all project files, see `src/FILE_MAP.md`.
  */
-
+⋮----
 export const getSafeMessageContent = (content) => {
-  if (typeof content === 'string') {
-    return <span dangerouslySetInnerHTML={{ __html: content }} />;
-  } else if (typeof content === 'object') {
-    try {
-      const stringContent = JSON.stringify(content, null, 2); // Format for readability
-      return <pre>{stringContent}</pre>;
-    } catch (error) {
-      console.error("Error stringifying message content:", error);
-      return <span>Error displaying message content.</span>;
-    }
-  } else if (content) { // Check if content is not null or undefined but not a string or object
-    return <span>{String(content)}</span>;
-  } else {
-    return null; // Or a placeholder like <span>No content</span>
-  }
-};
+⋮----
+const stringContent = JSON.stringify(content, null, 2); // Format for readability
+⋮----
+console.error("Error stringifying message content:", error);
+⋮----
+} else if (content) { // Check if content is not null or undefined but not a string or object
+return <span>{String(content)}</span>;
+⋮----
+return null; // Or a placeholder like <span>No content</span>
 
 ================
 File: src/utils/message.jsx
 ================
-import React from 'react';
-
 export const getSafeMessageContent = (content) => { // Ensure getSafeMessageContent is exported
-  if (typeof content === 'string') {
-    return <span dangerouslySetInnerHTML={{ __html: content }} />;
-  } else if (typeof content === 'object') {
-    try {
-      const stringContent = JSON.stringify(content, null, 2);
-      return <pre>{stringContent}</pre>;
-    } catch (error) {
-      console.error("Error stringifying message content:", error);
-      return <span>Error displaying message content.</span>;
-    }
-  } else if (content) {
-    return <span>{String(content)}</span>;
-  } else {
-    return null;
-  }
-};
+⋮----
+const stringContent = JSON.stringify(content, null, 2);
+⋮----
+console.error("Error stringifying message content:", error);
+⋮----
+return <span>{String(content)}</span>;
 
 ================
 File: vite.config.js
 ================
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-
 export default defineConfig({
-  plugins: [react()],
-  preview: {
-    host: '0.0.0.0',
-    port: 4173,
-    strictPort: true,
-    allowedHosts: ['chat.sadoway.ca']  // Replace with your domain
-  },
-  server: {
-    host: '0.0.0.0',
-    port: 4173,
-    strictPort: true,
-    allowedHosts: ['chat.sadoway.ca']  // Replace with your domain
-  },
-  build: {
-    minify: 'esbuild'
-  },
-  optimizeDeps: {
-    esbuildOptions: {
-      target: 'esnext'
-    }
-  }
-})
+plugins: [react()],
+⋮----
+allowedHosts: ['chat.sadoway.ca']  // Replace with your domain
 
 
 
