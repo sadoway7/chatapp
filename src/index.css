@@ -8,13 +8,22 @@
 body {
   font-family: sans-serif;
   background-color: #e8e8e8;
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.01) 0%, rgba(255, 255, 255, 0) 20%),
+    radial-gradient(circle at 70% 60%, rgba(255, 255, 255, 0.01) 0%, rgba(255, 255, 255, 0) 20%),
+    radial-gradient(circle at 40% 80%, rgba(255, 255, 255, 0.01) 0%, rgba(255, 255, 255, 0) 30%),
+    radial-gradient(circle at 80% 10%, rgba(255, 255, 255, 0.01) 0%, rgba(255, 255, 255, 0) 30%),
+    radial-gradient(circle at 10% 90%, rgba(255, 255, 255, 0.01) 0%, rgba(255, 255, 255, 0) 20%),
+    radial-gradient(circle at 90% 80%, rgba(255, 255, 255, 0.01) 0%, rgba(255, 255, 255, 0) 20%),
+    radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.01) 0%, rgba(255, 255, 255, 0) 30%),
+    radial-gradient(circle at 60% 40%, rgba(255, 255, 255, 0.01) 0%, rgba(255, 255, 255, 0) 30%);
   color: #333;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   height: 100vh;
   position: fixed;
-    width: 100%;
+  width: 100%;
 }
 
 /* Layout */
@@ -754,7 +763,7 @@ body {
     background-color: #2a2a2a;
     border-radius: 20px;
     box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
-    z-index: 30; /* Adjusted to be higher than chat-input-container (20) but lower than message-actions-container (50) */
+    z-index: 110; /* Increased to be higher than send button (101) */
     min-width: 290px;
     overflow: hidden;
     padding: 6px;
@@ -938,115 +947,201 @@ body {
 /* Settings Modal */
 .settings-modal {
   position: fixed;
-  top: 44%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.3s ease;
+}
+
+/* Settings Content */
+.settings-content {
   background-color: #ffffff;
-  border-radius: 16px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15), 0 3px 8px rgba(0, 0, 0, 0.1);
-  z-index: 5;
+  border-radius: 20px;
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.2),
+    0 5px 15px rgba(0, 0, 0, 0.1),
+    0 0 1px rgba(0, 0, 0, 0.1);
   color: #333;
   width: calc(100% - 40px);
   max-width: 480px;
-  transition: transform 0.2s ease, opacity 0.2s ease;
-  opacity: 1;
-    font-family: 'Inter', sans-serif;
-     font-size: clamp(1.2rem, 2.5vw, 0.8rem);
-  padding: 16px;
+  transition: all 0.3s cubic-bezier(0.19, 1, 0.22, 1);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 0.95rem;
+  overflow: hidden;
+  animation: modalSlideIn 0.3s cubic-bezier(0.19, 1, 0.22, 1);
+  position: relative;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -45%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
 }
 
 .settings-content {
-  background-color: #ffffff;
-  padding: 20px;
-  border-radius: 12px;
-  position: relative;
-  overflow: hidden;
+  padding: 24px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  box-shadow: none;
+  gap: 20px;
+}
+
+.settings-content h3 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 8px;
+  letter-spacing: -0.01em;
 }
 
 .settings-form {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 }
 
 .input-group {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
 
 .input-group label {
   font-weight: 600;
-  font-size: 1.1rem;
-  color: #444;
-  margin-left: 2px;
+  font-size: 0.9rem;
+  color: #555;
+  margin-left: 4px;
+  letter-spacing: 0.01em;
 }
 
 .input-group input,
 .input-group select {
   padding: 12px 16px;
   border-radius: 12px;
-  background-color: #ffffff;
+  background-color: #f8f8f8;
   color: #333;
-  border: 1px solid #ccc;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e0e0e0;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
   transition: all 0.2s ease;
-    font-size: clamp(1.3rem, 2.5vw, 1.2rem);
+  font-size: 0.95rem;
+  font-family: inherit;
 }
 
 .input-group input:focus,
 .input-group select:focus {
   outline: none;
   border-color: #ff9800;
-  box-shadow: 0 0 6px rgba(255, 152, 0, 0.4);
+  background-color: #fff;
+  box-shadow:
+    0 0 0 3px rgba(255, 152, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
 .button-group {
   display: flex;
-  gap: 8px;
-  margin-top: 10px;
+  gap: 12px;
+  margin-top: 16px;
 }
 
-.button-group button,
-.close-button {
-  background-color: #ffa117;
+.button-group button {
+  background-color: #ff9800;
   color: white;
   border: none;
-  padding: 18px 14px;
+  padding: 12px 16px;
   border-radius: 12px;
   cursor: pointer;
   font-weight: 600;
   transition: all 0.2s ease;
   flex: 1;
-    font-size: clamp(1.2rem, 2.5vw, 0.8rem);
+  font-size: 0.95rem;
+  box-shadow:
+    0 1px 3px rgba(255, 152, 0, 0.3),
+    0 1px 2px rgba(0, 0, 0, 0.1);
+  letter-spacing: 0.01em;
 }
 
-.button-group button:hover,
-.close-button:hover {
+.button-group button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 20px rgba(255, 152, 0, 0.3);
+  background-color: #f57c00;
+  box-shadow:
+    0 4px 12px rgba(255, 152, 0, 0.3),
+    0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
-.button-group button:active,
-.close-button:active {
+.button-group button:active {
   transform: translateY(0);
+  background-color: #ef6c00;
+  box-shadow:
+    0 1px 2px rgba(255, 152, 0, 0.3),
+    0 1px 1px rgba(0, 0, 0, 0.1);
 }
 
 .close-button {
-  background-color: #7f8c8d;
+  background-color: #f2f2f2;
+  color: #666;
+  border: none;
+  padding: 12px 16px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  width: 100%;
+  font-size: 0.95rem;
+  margin-top: 8px;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.1),
+    0 1px 2px rgba(0, 0, 0, 0.05);
+  letter-spacing: 0.01em;
 }
 
 .close-button:hover {
-  box-shadow: 0 4px 10px rgba(127, 140, 141, 0.3);
+  background-color: #e6e6e6;
+  color: #555;
+  transform: translateY(-2px);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.1),
+    0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.close-button:active {
+  transform: translateY(0);
+  background-color: #ddd;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.1),
+    0 1px 1px rgba(0, 0, 0, 0.05);
 }
 
 @media (max-width: 480px) {
   .settings-modal {
     width: calc(100% - 24px);
+    max-width: 100%;
+  }
+  
+  .settings-content {
+    padding: 20px;
+  }
+  
+  .button-group {
+    flex-direction: column;
+  }
+  
+  .button-group button,
+  .close-button {
+    padding: 14px 16px;
   }
 }
 
@@ -1173,12 +1268,36 @@ body {
 }
 
 /* Add indicator for messages with attachments */
+.user-message.has-attachment {
+  position: relative;
+}
+
 .user-message.has-attachment::before {
-  content: '📎';
+  content: '';
   position: absolute;
   top: 8px;
   right: 8px;
-  font-size: 0.9rem;
+  width: 16px;
+  height: 16px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23555' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48'%3E%3C/path%3E%3C/svg%3E");
+  background-size: contain;
+  background-repeat: no-repeat;
+  opacity: 0.6;
+}
+
+/* Add file name display for messages with attachments */
+.user-message.has-attachment::after {
+  content: attr(data-attachment-name);
+  position: absolute;
+  top: 8px;
+  right: 28px;
+  font-size: 0.7rem;
+  color: #777;
+  max-width: 120px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0.8;
 }
 
 .image-preview {
@@ -1244,6 +1363,15 @@ body {
 /* Dark Theme Overrides */
 body {
   background-color: #121212; /* Changed from #000000 to very dark gray */
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(30, 30, 30, 0.3) 0%, rgba(30, 30, 30, 0) 20%),
+    radial-gradient(circle at 70% 60%, rgba(30, 30, 30, 0.3) 0%, rgba(30, 30, 30, 0) 20%),
+    radial-gradient(circle at 40% 80%, rgba(30, 30, 30, 0.3) 0%, rgba(30, 30, 30, 0) 30%),
+    radial-gradient(circle at 80% 10%, rgba(30, 30, 30, 0.3) 0%, rgba(30, 30, 30, 0) 30%),
+    radial-gradient(circle at 10% 90%, rgba(30, 30, 30, 0.3) 0%, rgba(30, 30, 30, 0) 20%),
+    radial-gradient(circle at 90% 80%, rgba(30, 30, 30, 0.3) 0%, rgba(30, 30, 30, 0) 20%),
+    radial-gradient(circle at 30% 20%, rgba(30, 30, 30, 0.3) 0%, rgba(30, 30, 30, 0) 30%),
+    radial-gradient(circle at 60% 40%, rgba(30, 30, 30, 0.3) 0%, rgba(30, 30, 30, 0) 30%);
   color: #e5e5e5;
 }
 
@@ -1413,47 +1541,85 @@ body {
   box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
 }
 
+/* Dark mode settings modal */
 .settings-modal {
-  background-color: #222222;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  background-color: rgba(0, 0, 0, 0.7);
 }
 
+/* Dark mode settings content */
 .settings-content {
-  background-color: #222222;
+  background-color: #1e1e1e;
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.4),
+    0 5px 15px rgba(0, 0, 0, 0.3),
+    0 0 1px rgba(255, 255, 255, 0.05);
+  color: #e0e0e0;
+}
+
+.settings-content h3 {
+  color: #f0f0f0;
 }
 
 .input-group label {
-  color: #dedede;
+  color: #aaa;
 }
 
 .input-group input,
 .input-group select {
   background-color: #2a2a2a;
-  color: #dedede;
-  border: 1px solid #111111;
+  color: #e0e0e0;
+  border: 1px solid #333;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .input-group input:focus,
 .input-group select:focus {
-  border-color: #ffffff;
-  box-shadow: 0 0 6px rgba(255, 255, 255, 0.2);
+  border-color: #ff9800;
+  background-color: #333;
+  box-shadow:
+    0 0 0 3px rgba(255, 152, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .button-group button {
-  background-color: #ffffff;
-  color: #000000;
+  background-color: #ff9800;
+  color: #fff;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.3),
+    0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .button-group button:hover {
-  box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
+  background-color: #f57c00;
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.3),
+    0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.button-group button:active {
+  background-color: #ef6c00;
 }
 
 .close-button {
-  background-color: #2a2a2a;
+  background-color: #333;
+  color: #ccc;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.3),
+    0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .close-button:hover {
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  background-color: #444;
+  color: #ddd;
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.3),
+    0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.close-button:active {
+  background-color: #3a3a3a;
 }
 
 .copy-message {

@@ -1,7 +1,6 @@
 import React from 'react';
-import { FiSettings } from 'react-icons/fi';
 
-const Header = ({ handleClearChat, setShowSettings }) => {
+const Header = ({ handleClearChat }) => {
   return (
     <div className="chat-header">
       <div className="logo-container">
@@ -37,11 +36,8 @@ const Header = ({ handleClearChat, setShowSettings }) => {
         <h2 className="logo-text">chat<span className="logo-dot">.</span>sadoway</h2>
       </div>
       <div className="header-buttons">
-        <button className="clear-button" onClick={handleClearChat}> {/* Erase button first */}
+        <button className="clear-button" onClick={handleClearChat}>
           Clear
-        </button>
-        <button className="settings-button" onClick={() => setShowSettings(prev => !prev)}> {/* Then settings button */}
-          <FiSettings />
         </button>
       </div>
     </div>

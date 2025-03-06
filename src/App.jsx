@@ -111,11 +111,17 @@ function App() {
       role: 'user',
       content: input,
       isOriginalUserMessage: true, // Add metadata to identify original user messages
-      hasAttachment: !!fileId // Add flag to indicate if message has a file attachment
+      hasAttachment: !!fileId, // Add flag to indicate if message has a file attachment
+      attachmentName: uploadedFile ? uploadedFile.name : null // Add the file name for display
     };
     setMessages(prevMessages => [...prevMessages, userMessage]);
     setInput('');
     setIsTyping(true);
+    
+    // Clear the file immediately after sending
+    const tempFileId = fileId; // Store fileId temporarily for the API call
+    setUploadedFile(null);
+    setFileId(null);
 
     try {
       const response = await sendChatMessage(
@@ -123,7 +129,7 @@ function App() {
         apiKey,
         selectedModel,
         [...messages, userMessage],
-        fileId // Pass the file ID if available
+        tempFileId // Pass the temporary file ID if available
       );
       if (!response || !response.choices || !response.choices.length || !response.choices[0].message) {
         throw new Error('Invalid response format from API.');
@@ -144,9 +150,6 @@ function App() {
       setMessages(prevMessages => [...prevMessages, errorAssistantMessage]);
     } finally {
       setIsTyping(false);
-      // Clear the file after sending
-      setUploadedFile(null);
-      setFileId(null);
     }
   };
 
@@ -310,7 +313,7 @@ function App() {
 
   return (
     <div className="container">
-      <Header setShowSettings={setShowSettings} handleClearChat={handleClearChat} showSettings={showSettings} />
+      <Header handleClearChat={handleClearChat} />
       {fetchError && <div className="error-message">{fetchError}</div>}
       <ChatMessages messages={messages} chatContainerRef={chatContainerRef} isTyping={isTyping} handleRetry={handleRetry} />
       <ChatInput
