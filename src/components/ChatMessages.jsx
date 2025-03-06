@@ -67,7 +67,13 @@ const ChatMessages = ({ messages, chatContainerRef, isTyping, handleRetry }) => 
             )}
           </div>
         ))}
-        {isTyping && <div className="typing-indicator"><span></span></div>}
+        {isTyping && (
+          <div className="typing-indicator">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        )}
       </div>
     </>
   );

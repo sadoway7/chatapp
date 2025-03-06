@@ -89,7 +89,7 @@ body {
     width: calc(100% - 1px);
     max-width: 900px;
     bottom: 6px;
-    margin-bottom: 4.9rem;
+    margin-bottom: 6.5rem; /* Increased from 4.9rem to create more space */
     margin-top: 60px;
     -webkit-overflow-scrolling: touch;
 
@@ -135,19 +135,29 @@ body {
   width: fit-content;    /* Fit content width */
   min-width: 40%;
   margin-right: 16px;
-  background-color: #5c5c5c;
   padding-top: 20px;
-  color: #f7f0f0;
   align-self: inline-flex;
   margin-top: 8px;
-  color: black;
   margin-bottom: 16px;
   font-size: 1.1rem;
-  border-radius: 15px 0px 15px 15px;
-  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.08);
+  border-radius: 18px 4px 18px 18px; /* More modern asymmetric corners */
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.06),
+    0 4px 12px rgba(0, 0, 0, 0.04),
+    0 1px 4px rgba(0, 0, 0, 0.08);
   animation: popInuser 0.3s ease forwards;
-  background: linear-gradient(170deg, #ffffff, #fafafa);
-  
+  background: linear-gradient(160deg, #ffffff, #f8f8f8);
+  border: 1px solid rgba(0, 0, 0, 0.04); /* Subtle border */
+  color: rgba(0, 0, 0, 0.85); /* Slightly softer than pure black */
+  letter-spacing: 0.01em; /* Subtle letter spacing for better readability */
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.user-message:hover {
+  box-shadow:
+    0 3px 10px rgba(0, 0, 0, 0.08),
+    0 6px 16px rgba(0, 0, 0, 0.06);
+  transform: translateY(-1px); /* Subtle lift effect on hover */
 }
 
 @keyframes popInuser {
@@ -165,20 +175,32 @@ body {
   background-color: #ffffff;
   padding-top: 20px;
   align-self: flex-start;
-  color: #333;
+  color: rgba(0, 0, 0, 0.85); /* Slightly softer than pure black */
   margin-left: 16px;
   margin-top: 5px;
-  margin-bottom: 35px; /* Increased to accommodate the lower toolbar */
+  margin-bottom: 45px; /* Increased to provide more space for the action buttons */
   font-size: 1.1rem;
-  border-radius: 0px 15px 15px 15px;
+  border-radius: 4px 18px 18px 18px; /* More modern asymmetric corners, mirroring user message */
   border-left: 3px solid #ff9800;
   position: relative;
   animation: popInassistant 0.2s ease forwards;
   box-shadow:
-    0 2px 1px rgba(255, 152, 0, 0.06),
-    0 4px 2px rgba(255, 152, 0, 0.06),
-    0 8px 4px rgba(255, 152, 0, 0.06),
-    0 16px 8px rgba(255, 152, 0, 0.06);
+    0 2px 8px rgba(255, 152, 0, 0.06),
+    0 4px 12px rgba(0, 0, 0, 0.04),
+    0 8px 16px rgba(255, 152, 0, 0.03);
+  letter-spacing: 0.01em; /* Subtle letter spacing for better readability */
+  background: linear-gradient(170deg, #ffffff, #fefefe); /* Subtle gradient */
+  border-top: 1px solid rgba(255, 152, 0, 0.1); /* Subtle top border */
+  border-right: 1px solid rgba(0, 0, 0, 0.04); /* Subtle right border */
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04); /* Subtle bottom border */
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.assistant-message:hover {
+  box-shadow:
+    0 3px 10px rgba(255, 152, 0, 0.08),
+    0 6px 16px rgba(0, 0, 0, 0.06);
+  transform: translateY(-1px); /* Subtle lift effect on hover */
 }
 
 @keyframes popInassistant {
@@ -195,7 +217,12 @@ body {
 .message-content {
   word-wrap: break-word;
   white-space: pre-line;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.7rem;
+  line-height: 1.5; /* Improved line height for readability */
+  padding: 0 2px; /* Slight padding for better text spacing */
+  text-rendering: optimizeLegibility; /* Better text rendering */
+  -webkit-font-smoothing: antialiased; /* Smoother fonts on webkit browsers */
+  -moz-osx-font-smoothing: grayscale; /* Smoother fonts on Firefox */
 }
 
 .message-actions-container {
@@ -204,11 +231,23 @@ body {
   left: 10px;  /* Position at the bottom left */
   display: flex;
   flex-direction: row;  /* Changed to row for horizontal layout */
-  border-radius: 20px;
-  padding: 6px 8px;
-  background-color: #fff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
-  z-index: 5; /* Added to ensure it appears above other elements */
+  border-radius: 24px;
+  padding: 6px 10px;
+  background-color: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(4px);
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.08),
+    0 4px 12px rgba(0, 0, 0, 0.05);
+  z-index: 50; /* Increased to ensure it appears above all other elements */
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.message-actions-container:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 4px 8px rgba(0, 0, 0, 0.1),
+    0 6px 16px rgba(0, 0, 0, 0.06);
 }
 
 @media (max-width: 500px) {
@@ -237,7 +276,7 @@ body {
   }
   
   .assistant-message {
-    margin-bottom: 32px; /* Increased to accommodate the lower toolbar */
+    margin-bottom: 50px; /* Significantly increased for better spacing */
   }
 }
 
@@ -248,7 +287,7 @@ body {
   }
   
   .assistant-message {
-    margin-bottom: 30px; /* Increased to accommodate the lower toolbar */
+    margin-bottom: 55px; /* Further increased for small screens */
   }
 }
 
@@ -261,7 +300,7 @@ body {
   }
   
   .assistant-message {
-    margin-bottom: 28px; /* Increased to accommodate the lower toolbar */
+    margin-bottom: 60px; /* Maximum spacing for very small screens */
   }
   
   .copy-button,
@@ -284,27 +323,55 @@ body {
 
 .copy-button,
 .retry-button {
-  background-color: #f7f7f7;
-  border: 1px solid #eee;
+  background-color: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(0, 0, 0, 0.04);
   border-radius: 50%;
   cursor: pointer;
-  padding: 4px;
+  padding: 5px;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1),
-              0 1px 8px rgba(0, 0, 0, 0.05);
-  margin: 0 2px; /* Changed from margin-bottom to horizontal margins */
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.06),
+    0 1px 3px rgba(0, 0, 0, 0.1);
+  margin: 0 4px; /* Increased horizontal spacing */
+  position: relative;
+  overflow: hidden;
+}
+
+.copy-button::after,
+.retry-button::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 70%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
 .copy-button:hover,
 .retry-button:hover {
-  background-color: #f0f0f0;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12),
-              0 2px 12px rgba(0, 0, 0, 0.08);
+  background-color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow:
+    0 4px 8px rgba(0, 0, 0, 0.08),
+    0 2px 4px rgba(0, 0, 0, 0.12);
+}
+
+.copy-button:hover::after,
+.retry-button:hover::after {
+  opacity: 0.6;
+}
+
+.copy-button:active,
+.retry-button:active {
+  transform: translateY(0);
 }
 
 .copy-button svg,
@@ -337,13 +404,17 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-style: italic;
-  color: #888;
-  animation: popIn 0.5s ease forwards;
-  margin: 16px auto;
-  gap: 8px;
-  animation: slideIn 0.7s ease forwards 0.4s; /* Added 0.5s delay and increased duration to 0.7s */
+  margin: 16px auto 60px; /* Increased bottom margin to avoid being covered by input */
+  animation: slideIn 0.5s ease forwards;
   opacity: 0; /* Start hidden */
+  width: 70px;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 16px;
+  background: rgba(42, 42, 42, 0.8);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(4px);
+  z-index: 10; /* Ensure it appears above other elements */
 }
 
 @keyframes slideIn {
@@ -357,57 +428,97 @@ body {
   }
 }
 
-
-/* White bar container */
+/* Dots container */
 .typing-indicator::before {
   content: '';
-  width: 60px;
-  height: 24px;
-  background: #fcfcfc;
-  border-radius: 80px;
-  margin-left: -0px; /* from center left/right possition */
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.11), 0 2px 2px rgba(0, 0, 0, 0.05);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 20px;
+  background: linear-gradient(90deg,
+    rgba(255, 255, 255, 0.03) 0%,
+    rgba(255, 255, 255, 0.06) 50%,
+    rgba(255, 255, 255, 0.03) 100%);
+  animation: shimmer 1.5s infinite;
+  z-index: 0;
 }
 
-/* Orange rolling circle */
+@keyframes shimmer {
+  0% {
+    background-position: -80px 0;
+  }
+  100% {
+    background-position: 80px 0;
+  }
+}
+
+/* Create three dots */
 .typing-indicator span {
-
-  width: 20px;
-  height: 20px;
-  background: #ff9800;
-  border-radius: 12px;
-  top: 12px; /* Adjusted to center in the white bar */
-  right: 8px; /* Starting position */
-  animation: typingSlide 0.5s infinite ease-in-out;
+  position: relative;
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ffffff;
+  margin: 0 3px;
+  transform: translateY(0);
+  z-index: 1;
 }
 
-@keyframes slideIn {
-  0% {
-    opacity: 0;
-    transform: translateY(50px);
-  }
-  100% {
-    opacity: 1;
+/* First dot animation */
+.typing-indicator span:nth-child(1) {
+  animation: bounce 1s infinite 0s;
+}
+
+/* Second dot animation */
+.typing-indicator span:nth-child(2) {
+  animation: bounce 1s infinite 0.15s;
+}
+
+/* Third dot animation */
+.typing-indicator span:nth-child(3) {
+  animation: bounce 1s infinite 0.3s;
+}
+
+@keyframes bounce {
+  0%, 100% {
     transform: translateY(0);
+    background: #ffffff;
+  }
+  50% {
+    transform: translateY(-5px);
+    background: #ff9800;
   }
 }
 
-@keyframes typingSlide {
-  0% {
-    transform: translateX(-68px);
-    opacity: 0;
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  .typing-indicator {
+    margin-bottom: 70px; /* More space on mobile */
+    width: 60px; /* Slightly smaller on mobile */
+    height: 22px;
   }
-  20% {
-    opacity: 1;
+  
+  .typing-indicator span {
+    width: 5px;
+    height: 5px;
+    margin: 0 2px;
   }
-  68% {
-    opacity: 1;
+}
+
+/* Small mobile adjustments */
+@media (max-width: 480px) {
+  .typing-indicator {
+    margin-bottom: 80px; /* Even more space on small mobile */
   }
-  100% {
-    transform: translateX(-28px);
-    opacity: 0;
+}
+
+/* Very small screens */
+@media (max-width: 375px) {
+  .typing-indicator {
+    margin-bottom: 90px; /* Maximum space on very small screens */
   }
 }
 
@@ -419,19 +530,21 @@ body {
     transform: translateX(-50%);
     width: calc(100% - 40px);
     max-width: 600px;
-    background-color: #333;
+    background-color: rgba(51, 51, 51, 0.98); /* Slightly transparent for better blending */
     padding: 6px 6px; /* Minimal padding for compact appearance */
     border-radius: 22px; /* More rounded to match send button */
     box-shadow:
-        0 2px 4px rgba(0, 0, 0, 0.2),
-        0 4px 8px rgba(0, 0, 0, 0.1),
-        0 8px 16px rgba(0, 0, 0, 0.05),
+        0 2px 6px rgba(0, 0, 0, 0.3),
+        0 4px 10px rgba(0, 0, 0, 0.2),
+        0 8px 20px rgba(0, 0, 0, 0.1),
+        0 -5px 15px rgba(0, 0, 0, 0.15), /* Added upward shadow for better fade effect */
         inset 0 1px 1px rgba(255, 255, 255, 0.05);
-    z-index: 100;
+    z-index: 20; /* Adjusted to be lower than message-actions-container (50) */
     transition: box-shadow 0.3s cubic-bezier(.25,.8,.25,1), height 0.2s ease; /* Added height transition */
     display: flex;
     flex-direction: column; /* Changed to column to allow for options row at bottom */
     min-height: 34px; /* Further reduced minimum height */
+    backdrop-filter: blur(5px); /* Added blur effect for content behind */
 }
 
 /* Main input area with textarea and send button */
@@ -489,7 +602,7 @@ body {
     background-color: #2a2a2a;
     border-radius: 20px;
     box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
-    z-index: 1000;
+    z-index: 30; /* Adjusted to be higher than chat-input-container (20) but lower than message-actions-container (50) */
     min-width: 290px;
     overflow: hidden;
     padding: 6px;
@@ -530,10 +643,11 @@ body {
 
 .chat-input-container:hover {
       box-shadow:
-        0 4px 6px rgba(0, 0, 0, 0.3),
-        0 8px 12px rgba(0, 0, 0, 0.2),
-        0 12px 24px rgba(0, 0, 0, 0.1),
-        inset 0 1px 2px rgba(255, 255, 255, 0.07);
+        0 4px 8px rgba(0, 0, 0, 0.35),
+        0 8px 16px rgba(0, 0, 0, 0.25),
+        0 12px 28px rgba(0, 0, 0, 0.15),
+        0 -6px 16px rgba(0, 0, 0, 0.2), /* Enhanced upward shadow for better fade effect */
+        inset 0 1px 2px rgba(255, 255, 255, 0.1);
       transition: box-shadow 0.3s ease;
 }
 
@@ -548,6 +662,10 @@ body {
     .chat-input {
         padding: 8px 12px;
         max-height: 88px; /* Slightly smaller max height on mobile */
+    }
+    
+    .chat-messages {
+        margin-bottom: 7rem; /* Increased spacing on mobile */
     }
     
     .send-button {
@@ -567,15 +685,30 @@ body {
         padding: 6px 10px;
         font-size: clamp(1rem, 2vw, 0.8rem); /* Slightly smaller font */
     }
+    
+    .chat-messages {
+        margin-bottom: 7.5rem; /* Even more spacing on small screens */
+    }
+}
+
+/* Very small screens */
+@media (max-width: 375px) {
+    .chat-messages {
+        margin-bottom: 8rem; /* Maximum spacing on very small screens */
+    }
 }
 
 .chat-input-container:focus-within {
-    box-shadow: 0 2px 10px rgba(0,0,0,0.2); /* Slightly larger shadow when focused */
+    box-shadow:
+        0 3px 8px rgba(0, 0, 0, 0.3),
+        0 6px 12px rgba(0, 0, 0, 0.2),
+        0 9px 24px rgba(0, 0, 0, 0.1),
+        0 -5px 15px rgba(0, 0, 0, 0.15), /* Maintained upward shadow */
+        inset 0 1px 2px rgba(255, 255, 255, 0.1);
 }
 
 .chat-input-container:not(:focus-within) {
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12),
-              0 1px 2px rgba(0, 0, 0, 0.24); /* Default shadow */
+    /* Shadow is now handled by the main .chat-input-container style */
 }
 
 
@@ -837,19 +970,37 @@ body {
 }
 
 .user-message {
-  background: linear-gradient(170deg, #1a1a1a, #222222);
-  color: #dedede;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2),
-              0 0 4px rgba(255, 255, 255, 0.1);
+  background: linear-gradient(160deg, #2a2a2a, #222222);
+  color: #f0f0f0;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.2),
+    0 4px 12px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.user-message:hover {
+  box-shadow:
+    0 3px 10px rgba(0, 0, 0, 0.25),
+    0 6px 16px rgba(0, 0, 0, 0.15);
 }
 
 .assistant-message {
-  background-color: #222222;
-  color: #dedede;
-  border-left: 3px solid #ffffff;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2),
-              0 0 6px rgba(255, 255, 255, 0.1);
+  background: linear-gradient(170deg, #222222, #1e1e1e);
+  color: #f0f0f0;
+  border-left: 3px solid #ff9800;
+  border-top: 1px solid rgba(255, 152, 0, 0.1);
+  border-right: 1px solid rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.2),
+    0 4px 12px rgba(0, 0, 0, 0.1);
   /* margin-bottom is inherited from the main styles */
+}
+
+.assistant-message:hover {
+  box-shadow:
+    0 3px 10px rgba(0, 0, 0, 0.25),
+    0 6px 16px rgba(0, 0, 0, 0.15);
 }
 
 .chat-messages::-webkit-scrollbar-thumb {
@@ -865,23 +1016,49 @@ body {
 }
 
 .message-actions-container {
-  background-color: #1a1a1a;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  background-color: rgba(26, 26, 26, 0.95);
+  backdrop-filter: blur(4px);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.2),
+    0 4px 12px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.05);
   /* No need to override position properties as they're inherited from the main styles */
   /* z-index is inherited from the main styles */
 }
 
+.message-actions-container:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 4px 10px rgba(0, 0, 0, 0.25),
+    0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
 .copy-button,
 .retry-button {
-  background-color: #2a2a2a;
-  border: 1px solid #111111;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  background-color: rgba(42, 42, 42, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.15),
+    0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.copy-button::after,
+.retry-button::after {
+  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
 }
 
 .copy-button:hover,
 .retry-button:hover {
-  background-color: #222222;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  background-color: #333333;
+  transform: translateY(-2px);
+  box-shadow:
+    0 4px 8px rgba(0, 0, 0, 0.2),
+    0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.copy-button:hover::after,
+.retry-button:hover::after {
+  opacity: 0.3;
 }
 
 .copy-button svg,
@@ -899,17 +1076,24 @@ body {
 }
 
 .chat-input-container {
-  background-color: #2a2a2a;
+  background-color: rgba(42, 42, 42, 0.98); /* Slightly transparent for better blending */
   box-shadow:
-    0 2px 4px rgba(0, 0, 0, 0.2),
-    0 4px 8px rgba(0, 0, 0, 0.1),
-    0 8px 16px rgba(0, 0, 0, 0.05),
+    0 2px 6px rgba(0, 0, 0, 0.3),
+    0 4px 10px rgba(0, 0, 0, 0.2),
+    0 8px 20px rgba(0, 0, 0, 0.1),
+    0 -5px 15px rgba(0, 0, 0, 0.15), /* Added upward shadow for better fade effect */
     inset 0 1px 1px rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(5px); /* Added blur effect for content behind */
   /* Other properties are inherited from the main styles */
 }
 
 .chat-input-container:hover {
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  box-shadow:
+    0 4px 8px rgba(0, 0, 0, 0.35),
+    0 8px 16px rgba(0, 0, 0, 0.25),
+    0 12px 28px rgba(0, 0, 0, 0.15),
+    0 -6px 16px rgba(0, 0, 0, 0.2), /* Enhanced upward shadow for better fade effect */
+    inset 0 1px 2px rgba(255, 255, 255, 0.05);
 }
 
 .chat-input {
