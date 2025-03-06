@@ -70,7 +70,11 @@ function App() {
       return;
     }
 
-    const userMessage = { role: 'user', content: input };
+    const userMessage = {
+      role: 'user',
+      content: input,
+      isOriginalUserMessage: true // Add metadata to identify original user messages
+    };
     setMessages(prevMessages => [...prevMessages, userMessage]);
     setInput('');
     setIsTyping(true);
@@ -80,11 +84,19 @@ function App() {
       if (!response || !response.choices || !response.choices.length || !response.choices[0].message) {
         throw new Error('Invalid response format from API.');
       }
-      const assistantMessage = { role: 'assistant', content: response.choices[0].message.content };
+      const assistantMessage = {
+        role: 'assistant',
+        content: response.choices[0].message.content,
+        isResponseToRetry: false
+      };
       setMessages(prevMessages => [...prevMessages, assistantMessage]);
     } catch (error) {
       handleApiError(error, 'handleSendMessage');
-      const errorAssistantMessage = { role: 'assistant', content: 'Failed to get response from API, Check Settings' };
+      const errorAssistantMessage = {
+        role: 'assistant',
+        content: 'Failed to get response from API, Check Settings',
+        isResponseToRetry: false
+      };
       setMessages(prevMessages => [...prevMessages, errorAssistantMessage]);
     } finally {
       setIsTyping(false);
@@ -128,24 +140,40 @@ function App() {
   const handleClearChat = () => {
     setMessages([]);
   };
-  const handleRetrySend = async (retryMessage) => {
+  const handleRetrySend = async (retryMessage, originalUserMessageIndex) => {
     setIsTyping(true);
     try {
       // Get message history up to the retry point
       const messageHistory = messages.slice(0, -1); // Remove last assistant message
       
-      // Add our retry prompt
-      const messagesWithRetry = [...messageHistory, { role: 'user', content: retryMessage }];
+      // Add our retry prompt with metadata
+      const messagesWithRetry = [...messageHistory, {
+        role: 'user',
+        content: retryMessage,
+        isRetryPrompt: true,
+        originalUserMessageIndex: originalUserMessageIndex
+      }];
+      
+      // Log for debugging
+      console.log('Sending retry with original message index:', originalUserMessageIndex);
       
       const response = await sendChatMessage(openWebUIUrl, apiKey, selectedModel, messagesWithRetry);
       if (!response || !response.choices || !response.choices.length || !response.choices[0].message) {
         throw new Error('Invalid response format from API.');
       }
-      const assistantMessage = { role: 'assistant', content: response.choices[0].message.content };
+      const assistantMessage = {
+        role: 'assistant',
+        content: response.choices[0].message.content,
+        isResponseToRetry: messagesWithRetry.some(msg => msg.isRetryPrompt)
+      };
       setMessages(prevMessages => [...prevMessages, assistantMessage]);
     } catch (error) {
       handleApiError(error, 'handleSendMessage');
-      const errorAssistantMessage = { role: 'assistant', content: 'Failed to get response from API, Check Settings' };
+      const errorAssistantMessage = {
+        role: 'assistant',
+        content: 'Failed to get response from API, Check Settings',
+        isResponseToRetry: true
+      };
       setMessages(prevMessages => [...prevMessages, errorAssistantMessage]);
     } finally {
       setIsTyping(false);
@@ -153,25 +181,67 @@ function App() {
   };
 
   const handleRetry = (index) => {
-    // Find the most recent user message before this message
-    let userMessageIndex = index - 1;
-    while (userMessageIndex >= 0) {
-      if (messages[userMessageIndex].role === 'user') {
-        const originalMessage = messages[userMessageIndex].content;
-        const retryMessage = `Acknowledge that your previous response wasn't satisfactory and provide a new, different response to the user's question. Take a different approach this time by:
+    console.log('Retry clicked for message at index:', index);
+    
+    // Find the original user message this assistant is responding to
+    let originalUserMessageIndex = -1;
+    let originalUserMessage = '';
+    
+    // Check if the previous message is a retry prompt
+    if (index > 0 && messages[index-1].role === 'user' && messages[index-1].isRetryPrompt) {
+      // If it's a retry prompt, use its originalUserMessageIndex
+      originalUserMessageIndex = messages[index-1].originalUserMessageIndex;
+      if (originalUserMessageIndex !== undefined && messages[originalUserMessageIndex]) {
+        originalUserMessage = messages[originalUserMessageIndex].content;
+        console.log('Found original message via retry prompt metadata:', originalUserMessageIndex);
+      }
+    }
+    
+    // If we couldn't find the original message via metadata, search for it
+    if (originalUserMessageIndex === -1 || !originalUserMessage) {
+      let userMessageIndex = index - 1;
+      while (userMessageIndex >= 0) {
+        if (messages[userMessageIndex].role === 'user' && messages[userMessageIndex].isOriginalUserMessage) {
+          originalUserMessage = messages[userMessageIndex].content;
+          originalUserMessageIndex = userMessageIndex;
+          console.log('Found original message by searching:', originalUserMessageIndex);
+          break;
+        }
+        userMessageIndex--;
+      }
+    }
+    
+    // If we still couldn't find an original user message, use the most recent user message
+    if (originalUserMessageIndex === -1 || !originalUserMessage) {
+      let userMessageIndex = index - 1;
+      while (userMessageIndex >= 0) {
+        if (messages[userMessageIndex].role === 'user') {
+          originalUserMessage = messages[userMessageIndex].content;
+          originalUserMessageIndex = userMessageIndex;
+          console.log('Falling back to most recent user message:', originalUserMessageIndex);
+          break;
+        }
+        userMessageIndex--;
+      }
+    }
+    
+    if (originalUserMessageIndex >= 0 && originalUserMessage) {
+      console.log('Creating retry prompt for original message:', originalUserMessage);
+      
+      const retryMessage = `Acknowledge that your previous response wasn't satisfactory and provide a new, different response to the user's question. Take a different approach this time by:
   1. Using a different perspective or methodology
   2. Providing more specific examples or details
   3. Breaking down the explanation in a clearer way
   4. Being more direct and concise
-  5. you may get this message again, you need to have a different responce each time
+  5. you may get this message again, you need to have a different response each time
   
   Important: Do not repeat content from your previous response. Focus on giving a fresh, alternative answer that might better address what the user is looking for.
   
-  Original user message: ${originalMessage}`;
-        handleRetrySend(retryMessage);
-        break;
-      }
-      userMessageIndex--;
+  Original user message: ${originalUserMessage}`;
+      
+      handleRetrySend(retryMessage, originalUserMessageIndex);
+    } else {
+      console.error('Could not find original user message to retry');
     }
   };
 
