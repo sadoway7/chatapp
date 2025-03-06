@@ -1,0 +1,2497 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+================================================================
+File Summary
+================================================================
+
+Purpose:
+--------
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+
+File Format:
+------------
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Multiple file entries, each consisting of:
+  a. A separator line (================)
+  b. The file path (File: path/to/file)
+  c. Another separator line
+  d. The full contents of the file
+  e. A blank line
+
+Usage Guidelines:
+-----------------
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+
+Notes:
+------
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+
+Additional Info:
+----------------
+
+================================================================
+Directory Structure
+================================================================
+.dockerignore
+.gitignore
+Dockerfile
+index.html
+package.json
+public/config.json
+public/icon.svg
+README.md
+src/api/openwebui.js
+src/App.jsx
+src/commands.js
+src/components/ChatInput.jsx
+src/components/ChatMessages.jsx
+src/components/Header.jsx
+src/components/SettingsModal.jsx
+src/config.json
+src/FILE_MAP.md
+src/index.css
+src/main.jsx
+src/utils/config.js
+src/utils/error.js
+src/utils/message.js
+src/utils/message.jsx
+vite.config.js
+
+================================================================
+Files
+================================================================
+
+================
+File: .dockerignore
+================
+node_modules
+npm-debug.log
+.git
+.gitignore
+
+================
+File: .gitignore
+================
+/node_modules
+package-lock.json
+
+================
+File: Dockerfile
+================
+# Use Node.js 18 as base
+FROM node:18-slim
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files first (for better caching)
+COPY package*.json ./
+
+# Install dependencies and Vite explicitly
+RUN npm install && npm install vite@latest
+
+# Copy the rest of the app
+COPY . .
+
+# Build the app
+RUN npm run build
+
+# Expose the port (make sure this matches your vite.config.js)
+EXPOSE 4173
+
+# Start the application in preview mode
+CMD ["npm", "run", "preview", "--", "--host", "0.0.0.0"]
+
+================
+File: index.html
+================
+<!DOCTYPE html>
+    <html lang="en">
+      <head>
+        <meta charset="UTF-8" />
+        <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+        <title>chat.sadoway</title>
+      </head>
+      <body>
+        <div id="root"></div>
+        <script type="module" src="/src/main.jsx"></script>
+      </body>
+    </html>
+
+================
+File: package.json
+================
+{
+  "name": "chat-sadoway",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-icons": "^4.12.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.0.28",
+    "@types/react-dom": "^18.0.11",
+    "@vitejs/plugin-react": "^3.1.0",
+    "vite": "^4.5.2"
+  }
+}
+
+================
+File: public/config.json
+================
+{
+    "openWebUIUrl": "https://ai.sadoway.ca",
+    "apiKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Ijk0ODE3ZWY1LTE2NGYtNGU5ZS04M2VmLTY5MDdhZTViYjdkZiJ9.yh_1x9wXldWOWtKQdDRaHC1vdtwrx5jyfhkamOpd1ms",
+    "selectedModel": "deepseekr138b.deepseek-r1"
+  }
+
+================
+File: public/icon.svg
+================
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Background -->
+  <rect width="512" height="512" rx="100" fill="#1a1a1a"/>
+  
+  <!-- Stylized "L2" -->
+  <path d="M 120 140
+           L 120 340
+           L 220 340"
+        stroke="#4f46e5"
+        stroke-width="40"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        fill="none"/>
+  
+  <!-- Chat/AI element -->
+  <path d="M 280 180
+           Q 420 180 420 260
+           Q 420 340 280 340
+           L 260 340
+           L 240 380
+           L 220 340"
+        stroke="#4f46e5"
+        stroke-width="40"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        fill="none"/>
+  
+  <!-- Decorative dots -->
+  <circle cx="300" cy="260" r="12" fill="#4f46e5"/>
+  <circle cx="350" cy="260" r="12" fill="#4f46e5"/>
+  <circle cx="400" cy="260" r="12" fill="#4f46e5"/>
+</svg>
+
+================
+File: README.md
+================
+# chat.sadoway
+
+A web-based interface for interacting with Ollama models, designed to run on Unraid.
+
+## Prerequisites
+- Unraid server
+- Docker installed on Unraid
+- Git access
+
+## Installation Steps
+
+1. **Navigate to appdata Directory**
+   ```bash
+   cd /mnt/user/appdata
+   ```
+
+2. **Clone the Repository**
+   ```bash
+   git clone https://github.com/sadoway7/chat-sadoway.git
+   ```
+
+3. **Configure Domain Access**
+   ```bash
+   cd chat-sadoway
+   nano vite.config.js
+   ```
+   
+   Replace the entire content of the file with:
+   ```javascript
+   import { defineConfig } from 'vite'
+   import react from '@vitejs/plugin-react'
+
+   export default defineConfig({
+     plugins: [react()],
+     preview: {
+       host: '0.0.0.0',
+       port: 4173,
+       strictPort: true,
+       allowedHosts: ['your.domain.com']  // Replace with your domain
+     },
+     server: {
+       host: '0.0.0.0',
+       port: 4173,
+       strictPort: true,
+       allowedHosts: ['your.domain.com']  // Replace with your domain
+     }
+   })
+   ```
+   
+   Save the file:
+   - Press `CTRL + X` to exit
+   - Press `Y` to save changes
+   - Press `ENTER` to confirm
+
+4. **Configure Docker Container**
+   - Open Unraid's Docker tab
+   - Click "Add Container"
+   - Configure the following settings:
+
+   **Basic Configuration:**
+   - Name: `chat-sadoway`
+   - Repository: `node:20-slim`
+   - Network Type: `Bridge`
+   - Console: `Shell`
+
+   **Post Arguments:**
+   ```bash
+   sh -c "cd /app && rm -rf node_modules package-lock.json && NODE_ENV=development npm install && npm run build && NODE_ENV=production npm run preview -- --host 0.0.0.0"
+   ```
+
+   **Path Configuration:**
+   - Config Type: `Path`
+   - Name: `App Data`
+   - Host Path: `/mnt/user/appdata/chat-sadoway`
+   - Container Path: `/app`
+
+   **Port Configuration:**
+   - Config Type: `Port`
+   - Name: `Web UI`
+   - Host Port: `4127`
+   - Container Port: `4127`
+   - Connection Type: `TCP`
+
+5. **Start the Container**
+   - Click "Apply" to save the container settings
+   - Start the container from the Docker UI
+
+6. **Access the Application**
+   - Open your browser
+   - Navigate to `http://your.domain.com:4127` or `http://localhost:4127`
+
+7. **Initial Setup**
+   - Send the message `settings123!` in the chat to access the settings menu
+   - Configure your Ollama URL
+   - Select your preferred model (e.g., llama2, mistral)
+   - Save your settings
+
+## Notes
+- Settings access via `settings123!` is temporary and will be updated in future versions
+- The configuration is currently stored in browser cache and needs to be set up locally on first use
+- Server-side configuration is planned for future updates
+- For cleaner URLs without port numbers, consider using NGINX for domain mapping
+
+## Contributing
+This is a hobby project I'm working on in my spare time. Feel free to open issues or submit pull requests, but please note that response times may vary as this is a side project.
+
+## License
+Released under MIT License. Feel free to use, modify, and share this project.
+
+## Support
+This is a hobby project maintained in my free time. If you find bugs or have questions, feel free to open an issue on GitHub. I'll help when I can, but responses might take some time.
+
+================
+File: src/api/openwebui.js
+================
+import { handleApiError } from '../utils/error';
+
+export const fetchModels = async (openWebUIUrl, apiKey) => {
+  const headers = {
+    'Content-Type': 'application/json',
+  };
+  if (apiKey) {
+    headers['Authorization'] = `Bearer ${apiKey}`;
+  }
+
+  try {
+    const response = await fetch(`${openWebUIUrl}/api/models`, { headers });
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Failed to fetch models: ${response.status} ${response.statusText}\n${errorText}`);
+    }
+    const data = await response.json();
+    if (!data || !Array.isArray(data.data)) {
+      throw new Error('Invalid response format from OpenWebUI API.');
+    }
+    return data.data;
+  } catch (error) {
+    handleApiError(error, 'fetchModels');
+    throw error;
+  }
+};
+
+export const sendChatMessage = async (openWebUIUrl, apiKey, model, messages) => {
+  const headers = {
+    'Content-Type': 'application/json',
+  };
+  if (apiKey) {
+    headers['Authorization'] = `Bearer ${apiKey}`;
+  }
+
+  try {
+    const response = await fetch(`${openWebUIUrl}/api/chat/completions`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ model, messages, stream: false }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Failed to send message: ${response.status} ${response.statusText}\n${errorText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    handleApiError(error, 'sendChatMessage');
+    throw error;
+  }
+};
+
+================
+File: src/App.jsx
+================
+import React, { useState, useEffect, useRef } from 'react';
+import Header from './components/Header';
+import ChatInput from './components/ChatInput';
+import ChatMessages from './components/ChatMessages';
+import SettingsModal from './components/SettingsModal';
+import { fetchModels, sendChatMessage } from './api/openwebui';
+import config from './config.json';
+import { handleCommand } from './commands';
+import { handleApiError } from './utils/error';
+import './index.css';
+
+function App() {
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState('');
+  const [showSettings, setShowSettings] = useState(false);
+  const [openWebUIUrl, setOpenWebUIUrl] = useState(localStorage.getItem('openWebUIUrl') || config.openWebUIUrl);
+  const [apiKey, setApiKey] = useState(localStorage.getItem('apiKey') || config.apiKey);
+  const [models, setModels] = useState([]);
+  const [selectedModel, setSelectedModel] = useState(localStorage.getItem('selectedModel') || config.selectedModel);
+  const [fetchError, setFetchError] = useState(null);
+  const [isTyping, setIsTyping] = useState(false);
+  const chatContainerRef = useRef(null);
+
+  useEffect(() => {
+    const storedOpenWebUIUrl = localStorage.getItem('openWebUIUrl');
+    const storedApiKey = localStorage.getItem('apiKey');
+    const storedSelectedModel = localStorage.getItem('selectedModel');
+
+    if (storedOpenWebUIUrl) {
+      setOpenWebUIUrl(storedOpenWebUIUrl);
+    } else {
+      localStorage.setItem('openWebUIUrl', config.openWebUIUrl);
+    }
+
+    if (storedApiKey) {
+      setApiKey(storedApiKey);
+    } else {
+      localStorage.setItem('apiKey', config.apiKey);
+    }
+
+    if (storedSelectedModel) {
+      setSelectedModel(storedSelectedModel);
+    } else {
+      localStorage.setItem('selectedModel', config.selectedModel);
+    }
+  }, []);
+
+  useEffect(() => {
+    const initialize = async () => {
+      if (openWebUIUrl && apiKey && selectedModel) {
+        try {
+          const fetchedModels = await fetchModels(openWebUIUrl, apiKey);
+          setModels(fetchedModels.map(model => model.id));
+        } catch (error) {
+          handleApiError(error, 'Initialization');
+          setFetchError(error.message);
+        }
+      }
+    };
+
+    initialize();
+  }, [openWebUIUrl, apiKey, selectedModel]);
+
+  const handleSend = async () => {
+    if (!input.trim()) return;
+
+    if (input.startsWith('>')) {
+      const command = input.substring(1).trim();
+      handleCommand(command, setInput, setShowSettings);
+      return;
+    }
+
+    const userMessage = {
+      role: 'user',
+      content: input,
+      isOriginalUserMessage: true // Add metadata to identify original user messages
+    };
+    setMessages(prevMessages => [...prevMessages, userMessage]);
+    setInput('');
+    setIsTyping(true);
+
+    try {
+      const response = await sendChatMessage(openWebUIUrl, apiKey, selectedModel, [...messages, userMessage]);
+      if (!response || !response.choices || !response.choices.length || !response.choices[0].message) {
+        throw new Error('Invalid response format from API.');
+      }
+      const assistantMessage = {
+        role: 'assistant',
+        content: response.choices[0].message.content,
+        isResponseToRetry: false
+      };
+      setMessages(prevMessages => [...prevMessages, assistantMessage]);
+    } catch (error) {
+      handleApiError(error, 'handleSendMessage');
+      const errorAssistantMessage = {
+        role: 'assistant',
+        content: 'Failed to get response from API, Check Settings',
+        isResponseToRetry: false
+      };
+      setMessages(prevMessages => [...prevMessages, errorAssistantMessage]);
+    } finally {
+      setIsTyping(false);
+    }
+  };
+
+  const handleSettingsChange = (e) => {
+    const { name, value } = e.target;
+    if (name === 'openWebUIUrl') {
+      setOpenWebUIUrl(value);
+    } else if (name === 'apiKey') {
+      setApiKey(value);
+    } else if (name === 'selectedModel') {
+      setSelectedModel(value);
+    }
+  };
+
+  const handleSaveSettings = async (e) => {
+    e.preventDefault();
+    localStorage.setItem('openWebUIUrl', openWebUIUrl);
+    localStorage.setItem('apiKey', apiKey);
+    localStorage.setItem('selectedModel', selectedModel);
+    setShowSettings(false);
+
+    try {
+      const fetchedModels = await fetchModels(openWebUIUrl, apiKey);
+      setModels(fetchedModels.map(model => model.id));
+      setFetchError(null);
+    } catch (error) {
+      handleApiError(error, 'handleSaveSettings');
+      setFetchError(error.message);
+    }
+  };
+
+  const handleLoadDefaultSettings = () => {
+    setOpenWebUIUrl(config.openWebUIUrl);
+    setApiKey(config.apiKey);
+    setSelectedModel(config.selectedModel);
+  };
+
+  const handleClearChat = () => {
+    setMessages([]);
+  };
+  const handleRetrySend = async (retryMessage, originalUserMessageIndex) => {
+    setIsTyping(true);
+    try {
+      // Get message history up to the retry point
+      const messageHistory = messages.slice(0, -1); // Remove last assistant message
+      
+      // Add our retry prompt with metadata
+      const messagesWithRetry = [...messageHistory, {
+        role: 'user',
+        content: retryMessage,
+        isRetryPrompt: true,
+        originalUserMessageIndex: originalUserMessageIndex
+      }];
+      
+      // Log for debugging
+      console.log('Sending retry with original message index:', originalUserMessageIndex);
+      
+      const response = await sendChatMessage(openWebUIUrl, apiKey, selectedModel, messagesWithRetry);
+      if (!response || !response.choices || !response.choices.length || !response.choices[0].message) {
+        throw new Error('Invalid response format from API.');
+      }
+      const assistantMessage = {
+        role: 'assistant',
+        content: response.choices[0].message.content,
+        isResponseToRetry: messagesWithRetry.some(msg => msg.isRetryPrompt)
+      };
+      setMessages(prevMessages => [...prevMessages, assistantMessage]);
+    } catch (error) {
+      handleApiError(error, 'handleSendMessage');
+      const errorAssistantMessage = {
+        role: 'assistant',
+        content: 'Failed to get response from API, Check Settings',
+        isResponseToRetry: true
+      };
+      setMessages(prevMessages => [...prevMessages, errorAssistantMessage]);
+    } finally {
+      setIsTyping(false);
+    }
+  };
+
+  const handleRetry = (index) => {
+    console.log('Retry clicked for message at index:', index);
+    
+    // Find the original user message this assistant is responding to
+    let originalUserMessageIndex = -1;
+    let originalUserMessage = '';
+    
+    // Check if the previous message is a retry prompt
+    if (index > 0 && messages[index-1].role === 'user' && messages[index-1].isRetryPrompt) {
+      // If it's a retry prompt, use its originalUserMessageIndex
+      originalUserMessageIndex = messages[index-1].originalUserMessageIndex;
+      if (originalUserMessageIndex !== undefined && messages[originalUserMessageIndex]) {
+        originalUserMessage = messages[originalUserMessageIndex].content;
+        console.log('Found original message via retry prompt metadata:', originalUserMessageIndex);
+      }
+    }
+    
+    // If we couldn't find the original message via metadata, search for it
+    if (originalUserMessageIndex === -1 || !originalUserMessage) {
+      let userMessageIndex = index - 1;
+      while (userMessageIndex >= 0) {
+        if (messages[userMessageIndex].role === 'user' && messages[userMessageIndex].isOriginalUserMessage) {
+          originalUserMessage = messages[userMessageIndex].content;
+          originalUserMessageIndex = userMessageIndex;
+          console.log('Found original message by searching:', originalUserMessageIndex);
+          break;
+        }
+        userMessageIndex--;
+      }
+    }
+    
+    // If we still couldn't find an original user message, use the most recent user message
+    if (originalUserMessageIndex === -1 || !originalUserMessage) {
+      let userMessageIndex = index - 1;
+      while (userMessageIndex >= 0) {
+        if (messages[userMessageIndex].role === 'user') {
+          originalUserMessage = messages[userMessageIndex].content;
+          originalUserMessageIndex = userMessageIndex;
+          console.log('Falling back to most recent user message:', originalUserMessageIndex);
+          break;
+        }
+        userMessageIndex--;
+      }
+    }
+    
+    if (originalUserMessageIndex >= 0 && originalUserMessage) {
+      console.log('Creating retry prompt for original message:', originalUserMessage);
+      
+      const retryMessage = `Acknowledge that your previous response wasn't satisfactory and provide a new, different response to the user's question. Take a different approach this time by:
+  1. Using a different perspective or methodology
+  2. Providing more specific examples or details
+  3. Breaking down the explanation in a clearer way
+  4. Being more direct and concise
+  5. you may get this message again, you need to have a different response each time
+  
+  Important: Do not repeat content from your previous response. Focus on giving a fresh, alternative answer that might better address what the user is looking for.
+  
+  Original user message: ${originalUserMessage}`;
+      
+      handleRetrySend(retryMessage, originalUserMessageIndex);
+    } else {
+      console.error('Could not find original user message to retry');
+    }
+  };
+
+  useEffect(() => {
+    chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    
+    const handleResize = () => {
+      document.body.style.height = `${window.innerHeight}px`;
+    };
+
+    handleResize(); // Set initial height
+    
+    window.addEventListener('resize', handleResize);
+    
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [messages]);
+
+  return (
+    <div className="container">
+      <Header setShowSettings={setShowSettings} handleClearChat={handleClearChat} showSettings={showSettings} />
+      {fetchError && <div className="error-message">{fetchError}</div>}
+      <ChatMessages messages={messages} chatContainerRef={chatContainerRef} isTyping={isTyping} handleRetry={handleRetry} />
+      <ChatInput input={input} setInput={setInput} handleSend={handleSend} models={models} selectedModel={selectedModel} setSelectedModel={setSelectedModel} />
+      {showSettings && (
+        <div className="settings-modal">
+          <SettingsModal
+            showSettings={showSettings}
+            setShowSettings={setShowSettings}
+            openWebUIUrl={openWebUIUrl}
+            setOpenWebUIUrl={setOpenWebUIUrl}
+            apiKey={apiKey}
+            setApiKey={setApiKey}
+            selectedModel={selectedModel}
+            setSelectedModel={setSelectedModel}
+            models={models}
+            handleSaveSettings={handleSaveSettings}
+            handleLoadDefaultSettings={handleLoadDefaultSettings}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default App;
+
+================
+File: src/commands.js
+================
+export const handleCommand = (command, setInput, setShowSettings) => {
+  switch (command) {
+    case 'settings':
+      setShowSettings(true);
+      break;
+    // Add more commands here if needed
+    default:
+      console.log(`Unknown command: ${command}`);
+  }
+  setInput(''); // Clear the input field after handling a command
+};
+
+================
+File: src/components/ChatInput.jsx
+================
+import React, { useRef, useEffect, useState } from 'react';
+import { FiSend, FiChevronDown, FiChevronUp } from 'react-icons/fi';
+
+const ChatInput = ({
+  input,
+  setInput,
+  handleSend,
+  selectedModel,
+  setSelectedModel,
+  models = []
+}) => {
+  const textareaRef = useRef(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  // Auto-resize the textarea based on content
+  useEffect(() => {
+    if (textareaRef.current) {
+      // Reset height to auto to get the correct scrollHeight
+      textareaRef.current.style.height = 'auto';
+      
+      // Calculate new height (capped at 4 lines)
+      const lineHeight = 24; // Approximate line height in pixels
+      const maxHeight = lineHeight * 4; // Max height for 4 lines
+      const scrollHeight = textareaRef.current.scrollHeight;
+      
+      // Set the height to either the scrollHeight or maxHeight, whichever is smaller
+      textareaRef.current.style.height = `${Math.min(scrollHeight, maxHeight)}px`;
+    }
+  }, [input]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  const handleKeyDown = (e) => {
+    // Send message on Enter (without Shift key)
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault(); // Prevent default to avoid new line
+      handleSend();
+    }
+  };
+
+  const toggleDropdown = () => {
+    setDropdownOpen(!dropdownOpen);
+  };
+
+  const selectModel = (model) => {
+    setSelectedModel(model);
+    setDropdownOpen(false);
+  };
+
+  return (
+    <div className="chat-input-container">
+      <div className="input-row">
+        <textarea
+          ref={textareaRef}
+          className="chat-input"
+          placeholder="Type your message..."
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={handleKeyDown}
+          rows="1"
+        />
+      </div>
+      <div className="input-footer">
+        {models.length > 0 && (
+          <div className="custom-dropdown" ref={dropdownRef}>
+            <button
+              className="dropdown-toggle"
+              onClick={toggleDropdown}
+              title="Select AI Model"
+            >
+              {selectedModel} {dropdownOpen ? <FiChevronUp /> : <FiChevronDown />}
+            </button>
+            {dropdownOpen && (
+              <div className="dropdown-menu">
+                {models.map(model => (
+                  <button
+                    key={model}
+                    className={`dropdown-item ${model === selectedModel ? 'active' : ''}`}
+                    onClick={() => selectModel(model)}
+                  >
+                    {model}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+        <button className="send-button" onClick={handleSend}>
+          <FiSend />
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default ChatInput;
+
+================
+File: src/components/ChatMessages.jsx
+================
+import React from 'react';
+import { FiCopy, FiRefreshCw } from 'react-icons/fi';
+import { getSafeMessageContent } from '../utils/message.jsx';
+
+const ChatMessages = ({ messages, chatContainerRef, isTyping, handleRetry }) => {
+  const [showCopyMessage, setShowCopyMessage] = React.useState(false);
+  // Add ref for the message container
+  const copyMessageRef = React.useRef(null);
+
+  React.useEffect(() => {
+    let timeoutId;
+    if (showCopyMessage) {
+      // Ensure the message is visible by scrolling into view
+      if (copyMessageRef.current) {
+        copyMessageRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      timeoutId = setTimeout(() => {
+        setShowCopyMessage(false);
+      }, 1500);
+    }
+    return () => clearTimeout(timeoutId);
+  }, [showCopyMessage]);
+
+  const handleCopyMessage = (content) => {
+    navigator.clipboard.writeText(content)
+      .then(() => {
+        setShowCopyMessage(true);
+        console.log('Text copied to clipboard:', content);
+      })
+      .catch(err => {
+        console.error('Failed to copy text:', err);
+      });
+  };
+
+  return (
+    <>
+      {/* Move copy message outside the scrollable container */}
+      {showCopyMessage && (
+        <div className="copy-message" ref={copyMessageRef}>
+          Copied!
+        </div>
+      )}
+      
+      <div className="chat-messages" ref={chatContainerRef}>
+        {messages.map((message, index) => (
+          <div key={index} className={`message ${message.role === 'user' ? 'user-message' : 'assistant-message'}`}>
+            <div className="message-content">{getSafeMessageContent(message.content)}</div>
+            {message.role === 'assistant' && typeof message.content === 'string' && (
+              <div className="message-actions-container">
+                <div className="message-actions">
+                  <button 
+                    className="copy-button" 
+                    onClick={() => handleCopyMessage(message.content)}
+                    aria-label="Copy message"
+                  >
+                    <FiCopy />
+                  </button>
+                  <button 
+                    className="retry-button" 
+                    onClick={() => handleRetry(index)}
+                    aria-label="Retry message"
+                  >
+                    <FiRefreshCw />
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
+        {isTyping && (
+          <div className="typing-indicator">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        )}
+      </div>
+    </>
+  );
+};
+
+export default ChatMessages;
+
+================
+File: src/components/Header.jsx
+================
+import React from 'react';
+import { FiSettings } from 'react-icons/fi';
+
+const Header = ({ handleClearChat, setShowSettings }) => {
+  return (
+    <div className="chat-header">
+      <div className="logo-container">
+        <svg className="logo-svg" width="32" height="32" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          {/* Dark background circle */}
+          <circle cx="50" cy="50" r="48" fill="#1a1a1a" />
+          
+          {/* Geometric pattern - inspired by the examples but simplified */}
+          <g fill="#ffffff">
+            {/* Center circle */}
+            <circle cx="50" cy="50" r="8" />
+            
+            {/* Chunky rays - 8 directions */}
+            <rect x="46" y="15" width="8" height="25" />
+            <rect x="46" y="60" width="8" height="25" />
+            
+            <rect x="15" y="46" width="25" height="8" />
+            <rect x="60" y="46" width="25" height="8" />
+            
+            {/* Diagonal rays */}
+            <rect x="25" y="25" width="8" height="20" transform="rotate(-45 25 25)" />
+            <rect x="75" y="25" width="8" height="20" transform="rotate(45 75 25)" />
+            <rect x="25" y="75" width="8" height="20" transform="rotate(-135 25 75)" />
+            <rect x="75" y="75" width="8" height="20" transform="rotate(135 75 75)" />
+            
+            {/* Outer ring segments */}
+            <path d="M50 10 A40 40 0 0 1 90 50 L82 50 A32 32 0 0 0 50 18 Z" />
+            <path d="M90 50 A40 40 0 0 1 50 90 L50 82 A32 32 0 0 0 82 50 Z" />
+            <path d="M50 90 A40 40 0 0 1 10 50 L18 50 A32 32 0 0 0 50 82 Z" />
+            <path d="M10 50 A40 40 0 0 1 50 10 L50 18 A32 32 0 0 0 18 50 Z" />
+          </g>
+        </svg>
+        <h2 className="logo-text">chat<span className="logo-dot">.</span>sadoway</h2>
+      </div>
+      <div className="header-buttons">
+        <button className="clear-button" onClick={handleClearChat}> {/* Erase button first */}
+          Clear
+        </button>
+        <button className="settings-button" onClick={() => setShowSettings(prev => !prev)}> {/* Then settings button */}
+          <FiSettings />
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default Header;
+
+================
+File: src/components/SettingsModal.jsx
+================
+import React from 'react';
+
+const SettingsModal = ({
+  showSettings,
+  setShowSettings,
+  openWebUIUrl,
+  setOpenWebUIUrl,
+  apiKey,
+  setApiKey,
+  selectedModel,
+  setSelectedModel,
+  models,
+  handleSaveSettings,
+  handleLoadDefaultSettings,
+}) => {
+  if (!showSettings) {
+    return null;
+  }
+
+  return (
+    <div className="settings-modal">
+      <div className="settings-content"> {/* Added a container for content */}
+        <h3>Settings</h3>
+        <form className="settings-form" onSubmit={handleSaveSettings}>
+          <div className="input-group"> {/* Group URL input */}
+            <label htmlFor="openWebUIUrl">API URL:</label>
+            <input type="text" id="openWebUIUrl" name="openWebUIUrl" value={openWebUIUrl} onChange={(e) => setOpenWebUIUrl(e.target.value)} />
+          </div>
+
+          <div className="input-group"> {/* Group API Key input */}
+            <label htmlFor="apiKey">API Key:</label>
+            <input type="password" id="apiKey" name="apiKey" value={apiKey} onChange={(e) => setApiKey(e.target.value)} />
+          </div>
+
+          <div className="input-group"> {/* Group Model select */}
+            <label htmlFor="selectedModel">Model:</label>
+            <select id="selectedModel" name="selectedModel" value={selectedModel} onChange={(e) => setSelectedModel(e.target.value)}>
+              {models.map(model => <option key={model} value={model}>{model}</option>)}
+            </select>
+          </div>
+
+          <div className="button-group"> {/* Group buttons */}
+            <button type="button" onClick={handleLoadDefaultSettings}>Load Defaults</button>
+            <button type="submit">Save</button>
+          </div>
+        </form>
+        <button className="close-button" onClick={() => setShowSettings(false)}>Close Without Saving</button>
+      </div>
+    </div>
+  );
+};
+
+export default SettingsModal;
+
+================
+File: src/config.json
+================
+{
+  "openWebUIUrl": "https://open.sadoway.ca",
+  "apiKey": "sk-e0519f98601c409e8336dbc292bc6c42",
+  "selectedModel": "phi4-mini:latest"
+}
+
+================
+File: src/FILE_MAP.md
+================
+# Project File Map
+
+This file provides an overview of all the files in the project and their purposes.
+
+## Application Overview
+
+This application is a web-based chat interface for interacting with language models through the OpenWebUI API. It allows users to send messages and receive responses, configure settings, and manage their chat history.
+
+### Key Features
+
+- Chat Interface: Send and receive messages from a language model.
+- Command System: Use commands (e.g., ">settings") for specific actions.
+- Settings Panel: Configure API keys, URLs, and models.
+- Model Selection: Choose different language models.
+- Clear Chat History: Erase all messages.
+- Error Handling: Display messages for API errors.
+- Copy Message: Copy assistant responses.
+- Default Settings: Pre-configured settings.
+
+## File Structure
+
+- **`src/App.jsx`:** Main application component, managing state and UI.
+- **`src/components/`:**
+    - **`ChatInput.jsx`:** Component for user input and sending messages.
+    - **`ChatMessages.jsx`:** Displays chat messages.
+    - **`Header.jsx`:** Top bar with title and settings button.
+    - **`SettingsModal.jsx`:** Modal for configuring settings.
+- **`src/api/openwebui.js`:** Functions for interacting with the OpenWebUI API.
+- **`src/commands.js`:** Handles command logic.
+- **`src/config.json`:** Default configuration settings.
+- **`src/index.css`:** Styles for the application.
+- **`src/main.jsx`:** Entry point of the application.
+- **`src/utils/`:**
+    - **`config.js`:** Utility functions for managing configuration.
+    - **`error.js`:** Error handling utilities.
+    - **`message.jsx`:** Utility functions for handling message content.
+- **`vite.config.js`:** Vite configuration file.
+- **`package.json`:** Project dependencies and scripts.
+- **`package-lock.json`:** Locked dependency versions.
+- **`README.md`:** Project information.
+- **`.gitignore`:** Files and folders ignored by Git.
+
+================
+File: src/index.css
+================
+/* Base Reset */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: sans-serif;
+  background-color: #e8e8e8;
+  color: #333;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  height: 100vh;
+  position: fixed;
+    width: 100%;
+}
+
+/* Layout */
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Header */
+.chat-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(180deg, rgba(18, 18, 18, 0.95) 0%, rgba(18, 18, 18, 0.85) 80%, rgba(18, 18, 18, 0) 100%); /* Gradient that fades to transparent */
+  padding: 0 clamp(12px, 4vw, 24px); /* Adjusted padding */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: none; /* Removed border completely */
+  z-index: 10; /* Increased z-index to ensure it stays on top */
+  height: 60px; /* Fixed height for consistency */
+  transition: opacity 0.3s ease;
+}
+
+.chat-header:hover {
+  opacity: 0.98; /* Subtle hover effect */
+}
+
+/* Logo container */
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 100%;
+}
+
+/* Logo SVG */
+.logo-svg {
+  width: 32px;
+  height: 32px;
+  transition: transform 0.3s ease;
+}
+
+.logo-container:hover .logo-svg {
+  transform: rotate(5deg) scale(1.05);
+}
+
+/* Logo text */
+.logo-text {
+  font-size: clamp(1.1rem, 1.3vw, 1.3rem); /* Slightly larger font */
+  font-weight: 600; /* Bolder for business look */
+  padding: 0;
+  margin: 0;
+  color: rgba(229, 229, 229, 0.95); /* Slightly more opaque */
+  letter-spacing: 0.03em; /* Increased letter spacing for tech feel */
+  display: flex;
+  align-items: center;
+  height: 100%;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15); /* Enhanced text shadow */
+  font-family: 'Segoe UI', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif; /* Modern tech font stack */
+}
+
+/* Dot styling */
+.logo-dot {
+  color: #ffffff; /* White to match the SVG */
+  font-weight: 700;
+  margin: 0 1px;
+}
+
+.logo-container:hover .logo-text {
+  color: rgba(229, 229, 229, 1); /* Full opacity on hover */
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.25); /* Enhanced shadow on hover */
+  transform: translateY(-1px); /* Subtle lift effect */
+}
+
+.header-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px; /* Modern gap property instead of margins */
+  height: 100%;
+}
+
+.header-buttons button {
+  background: rgba(42, 42, 42, 0.3); /* More transparent background */
+  border: none; /* Removed border completely */
+  color: rgba(229, 229, 229, 0.85); /* Semi-transparent text for better blending */
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 6px 12px; /* Slightly reduced padding */
+  border-radius: 12px; /* Slightly reduced border radius */
+  transition: all 0.2s ease; /* Smooth transition for all properties */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: none; /* Removed shadow completely */
+}
+
+.header-buttons button:hover {
+  background-color: rgba(255, 255, 255, 0.1); /* Subtle hover effect */
+  color: rgba(229, 229, 229, 1); /* Full opacity on hover */
+}
+
+.header-buttons button:active {
+  background-color: rgba(255, 255, 255, 0.15); /* Slightly more visible when active */
+}
+
+.settings-button svg {
+  font-size: 1rem;
+  transition: transform 0.2s ease;
+}
+
+.settings-button:hover svg {
+  transform: rotate(15deg); /* Subtle rotation on hover */
+}
+
+/* Mobile adjustments for header */
+@media (max-width: 480px) {
+  .chat-header {
+    padding: 0 12px; /* Reduced padding on small screens */
+    height: 50px; /* Slightly smaller height on mobile */
+    background: linear-gradient(180deg, rgba(18, 18, 18, 0.92) 0%, rgba(18, 18, 18, 0.8) 80%, rgba(18, 18, 18, 0) 100%); /* Slightly adjusted gradient for mobile */
+  }
+  
+  .header-buttons button {
+    padding: 5px 10px; /* Smaller padding on mobile */
+    font-size: 0.85rem; /* Smaller font on mobile */
+  }
+  
+  .settings-button svg {
+    font-size: 0.9rem; /* Smaller icon on mobile */
+  }
+  
+  /* Mobile logo adjustments */
+  .logo-svg {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .logo-text {
+    font-size: 1rem;
+  }
+  
+  .logo-container {
+    gap: 8px;
+  }
+  
+  .chat-messages {
+    top: 35px; /* Reduced to allow content to flow under the header gradient on mobile */
+    padding-top: 15px; /* Slightly reduced padding on mobile */
+    padding-bottom: 25px; /* Slightly reduced bottom padding on mobile */
+    /* Adjusted fade for mobile - both top and bottom */
+    mask-image: linear-gradient(
+      to bottom,
+      transparent 0%,
+      black 15px,
+      black calc(100% - 100px),
+      transparent 100%
+    );
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      transparent 0%,
+      black 15px,
+      black calc(100% - 100px),
+      transparent 100%
+    );
+  }
+}
+
+.chat-messages {
+    top: 40px; /* Reduced to allow content to flow under the header gradient */
+    bottom: 25px;
+    position: fixed;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100% - 1px);
+    max-width: 900px;
+    bottom: 6px;
+    margin-bottom: 6.5rem; /* Increased from 4.9rem to create more space */
+    margin-top: 0; /* Removed margin-top since we're using top value */
+    -webkit-overflow-scrolling: touch;
+    transition: top 0.3s ease; /* Smooth transition when header height changes */
+    padding-top: 20px; /* Add padding to ensure first messages don't appear directly under header */
+    padding-bottom: 30px; /* Add padding at the bottom for fade-out effect */
+    /* Fade in at top and fade out at bottom */
+    mask-image: linear-gradient(
+        to bottom,
+        transparent 0%,
+        black 20px,
+        black calc(100% - 120px),
+        transparent 100%
+    );
+    -webkit-mask-image: linear-gradient(
+        to bottom,
+        transparent 0%,
+        black 20px,
+        black calc(100% - 120px),
+        transparent 100%
+    );
+
+    /* Webkit scrollbar styles */
+    &::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: #d1d5db;
+        border-radius: 4px;
+    }
+
+    &::-webkit-scrollbar-thumb:hover {
+        background: #9ca3af;
+    }
+
+    /* Firefox scrollbar styles */
+    scrollbar-width: thin;
+    scrollbar-color: #d1d5db transparent;
+}
+
+
+.message {
+  padding: 6px 19px;
+  padding-bottom: 10px;
+  max-width: 78%;
+  clear: both;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  transform: translateY(10px);
+
+  display: block;        /* Changed back to block */
+}
+
+
+
+.user-message {
+  margin-left: auto;     /* Push user messages to right */
+  width: fit-content;    /* Fit content width */
+  min-width: 40%;
+  margin-right: 16px;
+  padding-top: 20px;
+  align-self: inline-flex;
+  margin-top: 8px;
+  margin-bottom: 16px;
+  font-size: 1.1rem;
+  border-radius: 18px 4px 18px 18px; /* More modern asymmetric corners */
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.06),
+    0 4px 12px rgba(0, 0, 0, 0.04),
+    0 1px 4px rgba(0, 0, 0, 0.08);
+  animation: popInuser 0.3s ease forwards;
+  background: linear-gradient(160deg, #ffffff, #f8f8f8);
+  border: 1px solid rgba(0, 0, 0, 0.04); /* Subtle border */
+  color: rgba(0, 0, 0, 0.85); /* Slightly softer than pure black */
+  letter-spacing: 0.01em; /* Subtle letter spacing for better readability */
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.user-message:hover {
+  box-shadow:
+    0 3px 10px rgba(0, 0, 0, 0.08),
+    0 6px 16px rgba(0, 0, 0, 0.06);
+  transform: translateY(-1px); /* Subtle lift effect on hover */
+}
+
+@keyframes popInuser {
+  from {
+    opacity: 0;
+    transform: translateY(90px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.assistant-message {
+  background-color: #ffffff;
+  padding-top: 20px;
+  align-self: flex-start;
+  color: rgba(0, 0, 0, 0.85); /* Slightly softer than pure black */
+  margin-left: 16px;
+  margin-top: 5px;
+  margin-bottom: 45px; /* Increased to provide more space for the action buttons */
+  font-size: 1.1rem;
+  border-radius: 4px 18px 18px 18px; /* More modern asymmetric corners, mirroring user message */
+  border-left: 3px solid #ff9800;
+  position: relative;
+  animation: popInassistant 0.2s ease forwards;
+  box-shadow:
+    0 2px 8px rgba(255, 152, 0, 0.06),
+    0 4px 12px rgba(0, 0, 0, 0.04),
+    0 8px 16px rgba(255, 152, 0, 0.03);
+  letter-spacing: 0.01em; /* Subtle letter spacing for better readability */
+  background: linear-gradient(170deg, #ffffff, #fefefe); /* Subtle gradient */
+  border-top: 1px solid rgba(255, 152, 0, 0.1); /* Subtle top border */
+  border-right: 1px solid rgba(0, 0, 0, 0.04); /* Subtle right border */
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04); /* Subtle bottom border */
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.assistant-message:hover {
+  box-shadow:
+    0 3px 10px rgba(255, 152, 0, 0.08),
+    0 6px 16px rgba(0, 0, 0, 0.06);
+  transform: translateY(-1px); /* Subtle lift effect on hover */
+}
+
+@keyframes popInassistant {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.message-content {
+  word-wrap: break-word;
+  white-space: pre-line;
+  margin-bottom: 0.7rem;
+  line-height: 1.5; /* Improved line height for readability */
+  padding: 0 2px; /* Slight padding for better text spacing */
+  text-rendering: optimizeLegibility; /* Better text rendering */
+  -webkit-font-smoothing: antialiased; /* Smoother fonts on webkit browsers */
+  -moz-osx-font-smoothing: grayscale; /* Smoother fonts on Firefox */
+}
+
+.message-actions-container {
+  position: absolute;
+  bottom: -30px;  /* Moved down further from the text */
+  left: 10px;  /* Position at the bottom left */
+  display: flex;
+  flex-direction: row;  /* Changed to row for horizontal layout */
+  border-radius: 24px;
+  padding: 6px 10px;
+  background-color: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(4px);
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.08),
+    0 4px 12px rgba(0, 0, 0, 0.05);
+  z-index: 50; /* Increased to ensure it appears above all other elements */
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.message-actions-container:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 4px 8px rgba(0, 0, 0, 0.1),
+    0 6px 16px rgba(0, 0, 0, 0.06);
+}
+
+@media (max-width: 500px) {
+  .message-actions-container {
+    padding: 4px 6px; /* More compact on mobile */
+  }
+}
+
+/* Media queries for different screen sizes */
+@media (max-width: 1200px) {
+  .message-actions-container {
+    left: 10px;
+  }
+}
+
+@media (max-width: 992px) {
+  .message-actions-container {
+    left: 10px;
+  }
+}
+
+@media (max-width: 768px) {
+  .message-actions-container {
+    bottom: -27px; /* Adjusted for medium screens, moved down further */
+    left: 10px;
+  }
+  
+  .assistant-message {
+    margin-bottom: 50px; /* Significantly increased for better spacing */
+  }
+}
+
+@media (max-width: 576px) {
+  .message-actions-container {
+    bottom: -25px; /* Adjusted for small screens, moved down further */
+    left: 10px;
+  }
+  
+  .assistant-message {
+    margin-bottom: 55px; /* Further increased for small screens */
+  }
+}
+
+/* For very small screens */
+@media (max-width: 375px) {
+  .message-actions-container {
+    bottom: -22px; /* Further adjusted for very small screens, moved down further */
+    left: 8px;
+    padding: 3px 5px; /* Even more compact for very small screens */
+  }
+  
+  .assistant-message {
+    margin-bottom: 60px; /* Maximum spacing for very small screens */
+  }
+  
+  .copy-button,
+  .retry-button {
+    width: 24px;
+    height: 24px;
+    margin: 0 2px;
+  }
+  
+  .message-actions {
+    gap: 4px; /* Minimal gap for very small screens */
+  }
+}
+
+.message-actions {
+  display: flex;
+  flex-direction: row;  /* Changed to row for horizontal layout */
+  gap: 10px;  /* Increased gap for better spacing between buttons */
+}
+
+.copy-button,
+.retry-button {
+  background-color: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  border-radius: 50%;
+  cursor: pointer;
+  padding: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  transition: all 0.2s ease;
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.06),
+    0 1px 3px rgba(0, 0, 0, 0.1);
+  margin: 0 4px; /* Increased horizontal spacing */
+  position: relative;
+  overflow: hidden;
+}
+
+.copy-button::after,
+.retry-button::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 70%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.copy-button:hover,
+.retry-button:hover {
+  background-color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow:
+    0 4px 8px rgba(0, 0, 0, 0.08),
+    0 2px 4px rgba(0, 0, 0, 0.12);
+}
+
+.copy-button:hover::after,
+.retry-button:hover::after {
+  opacity: 0.6;
+}
+
+.copy-button:active,
+.retry-button:active {
+  transform: translateY(0);
+}
+
+.copy-button svg,
+.retry-button svg {
+  font-size: 0.9rem;
+  color: #333;
+}
+
+/* Mobile adjustments - moved to smaller breakpoint */
+@media (max-width: 500px) {
+  .copy-button,
+  .retry-button {
+    width: 26px;
+    height: 26px;
+    margin: 0 3px; /* Slightly increased horizontal spacing */
+  }
+  
+  .copy-button svg,
+  .retry-button svg {
+    font-size: 1rem;
+  }
+  
+  .message-actions {
+    gap: 6px; /* Reduced gap for mobile */
+  }
+}
+
+.typing-indicator {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 16px auto 60px; /* Increased bottom margin to avoid being covered by input */
+  animation: slideIn 0.5s ease forwards;
+  opacity: 0; /* Start hidden */
+  width: 70px;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 16px;
+  background: rgba(42, 42, 42, 0.8);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(4px);
+  z-index: 10; /* Ensure it appears above other elements */
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Dots container */
+.typing-indicator::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 20px;
+  background: linear-gradient(90deg,
+    rgba(255, 255, 255, 0.03) 0%,
+    rgba(255, 255, 255, 0.06) 50%,
+    rgba(255, 255, 255, 0.03) 100%);
+  animation: shimmer 1.5s infinite;
+  z-index: 0;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -80px 0;
+  }
+  100% {
+    background-position: 80px 0;
+  }
+}
+
+/* Create three dots */
+.typing-indicator span {
+  position: relative;
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ffffff;
+  margin: 0 3px;
+  transform: translateY(0);
+  z-index: 1;
+}
+
+/* First dot animation */
+.typing-indicator span:nth-child(1) {
+  animation: bounce 1s infinite 0s;
+}
+
+/* Second dot animation */
+.typing-indicator span:nth-child(2) {
+  animation: bounce 1s infinite 0.15s;
+}
+
+/* Third dot animation */
+.typing-indicator span:nth-child(3) {
+  animation: bounce 1s infinite 0.3s;
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+    background: #ffffff;
+  }
+  50% {
+    transform: translateY(-5px);
+    background: #ff9800;
+  }
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  .typing-indicator {
+    margin-bottom: 70px; /* More space on mobile */
+    width: 60px; /* Slightly smaller on mobile */
+    height: 22px;
+  }
+  
+  .typing-indicator span {
+    width: 5px;
+    height: 5px;
+    margin: 0 2px;
+  }
+}
+
+/* Small mobile adjustments */
+@media (max-width: 480px) {
+  .typing-indicator {
+    margin-bottom: 80px; /* Even more space on small mobile */
+  }
+}
+
+/* Very small screens */
+@media (max-width: 375px) {
+  .typing-indicator {
+    margin-bottom: 90px; /* Maximum space on very small screens */
+  }
+}
+
+/* Chat Input */
+.chat-input-container {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100% - 40px);
+    max-width: 600px;
+    background-color: rgba(42, 42, 42, 0.92); /* More transparent for better blending */
+    padding: 6px 6px; /* Minimal padding for compact appearance */
+    border-radius: 22px; /* More rounded to match send button */
+    box-shadow:
+        0 1px 4px rgba(0, 0, 0, 0.25),
+        0 2px 6px rgba(0, 0, 0, 0.15),
+        0 4px 8px rgba(0, 0, 0, 0.08),
+        0 -3px 6px rgba(0, 0, 0, 0.12), /* Reduced upward shadow for better fade effect */
+        inset 0 1px 1px rgba(255, 255, 255, 0.03);
+    z-index: 20; /* Adjusted to be lower than message-actions-container (50) */
+    transition: box-shadow 0.3s cubic-bezier(.25,.8,.25,1), height 0.2s ease, opacity 0.3s ease; /* Added opacity transition */
+    display: flex;
+    flex-direction: column; /* Changed to column to allow for options row at bottom */
+    min-height: 34px; /* Further reduced minimum height */
+    backdrop-filter: blur(5px); /* Added blur effect for content behind */
+    /* Add subtle gradient to top edge to blend with faded messages */
+    border: 1px solid rgba(255, 255, 255, 0.03);
+    border-top: none;
+    /* Gradient overlay to blend with the faded messages */
+    &::before {
+        content: '';
+        position: absolute;
+        top: -40px;
+        left: 0;
+        right: 0;
+        height: 40px;
+        background: linear-gradient(to bottom, rgba(18, 18, 18, 0), rgba(18, 18, 18, 0.5));
+        pointer-events: none;
+        z-index: -1;
+    }
+}
+
+/* Main input area with textarea and send button */
+.chat-input-container .input-row {
+    display: flex;
+    width: 100%;
+    align-items: flex-end; /* Changed to flex-end to align items at the bottom */
+    position: relative;
+    min-height: 34px; /* Further reduced minimum height */
+}
+
+/* Input footer with model selector and send button */
+.input-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 0px;
+    margin-left: 10px;
+    margin-bottom: 0px;
+    margin-right: 10px;
+    margin-bottom: 0px;
+}
+
+/* Custom dropdown styling */
+.custom-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-toggle {
+    background-color: transparent;
+    border: none;
+    border-radius: 20px;
+    color: #999;
+    font-size: 0.85rem;
+    padding: 8px 7px;
+    cursor: pointer;
+    outline: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: background-color 0.2s ease;
+    min-width: 150px;
+}
+
+.dropdown-toggle:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.dropdown-menu {
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    margin-bottom: 6px;
+    background-color: #2a2a2a;
+    border-radius: 20px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+    z-index: 30; /* Adjusted to be higher than chat-input-container (20) but lower than message-actions-container (50) */
+    min-width: 290px;
+    overflow: hidden;
+    padding: 6px;
+}
+
+.dropdown-item {
+    display: block;
+    width: 100%;
+    padding: 12px 16px;
+    text-align: left;
+    background: none;
+    border: none;
+    border-radius: 16px;
+    color: #dedede;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    margin-bottom: 4px;
+}
+
+.dropdown-item:last-child {
+    margin-bottom: 0;
+}
+
+.dropdown-item:hover {
+    background-color: #3a3a3a;
+}
+
+.dropdown-item.active {
+    background-color: #3a3a3a;
+    font-weight: 500;
+}
+
+/* Adjust chat input container padding for the footer */
+.chat-input-container {
+    padding-bottom: 0px; /* Minimal padding */
+}
+
+.chat-input-container:hover {
+      box-shadow:
+        0 2px 6px rgba(0, 0, 0, 0.35),
+        0 4px 8px rgba(0, 0, 0, 0.25),
+        0 6px 12px rgba(0, 0, 0, 0.15),
+        0 -4px 8px rgba(0, 0, 0, 0.15), /* Reduced upward shadow for better fade effect */
+        inset 0 1px 2px rgba(255, 255, 255, 0.1);
+      transition: box-shadow 0.3s ease;
+}
+
+
+/* Add media query for small screens */
+@media (max-width: 768px) {
+    .chat-input-container {
+        width: calc(100% - 60px);
+        bottom: 25px;
+    }
+    
+    .chat-input {
+        padding: 8px 12px;
+        max-height: 88px; /* Slightly smaller max height on mobile */
+    }
+    
+    .chat-messages {
+        margin-bottom: 7rem; /* Increased spacing on mobile */
+    }
+    
+    .send-button {
+        /* No need to override position on mobile, the percentage-based positioning works for all sizes */
+    }
+}
+
+/* Even more padding for very small screens */
+@media (max-width: 480px) {
+    .chat-input-container {
+        width: calc(100% - 60px);
+        bottom: 25px;
+        padding: 8px; /* Slightly smaller padding */
+    }
+    
+    .chat-input {
+        padding: 6px 10px;
+        font-size: clamp(1rem, 2vw, 0.8rem); /* Slightly smaller font */
+    }
+    
+    .chat-messages {
+        margin-bottom: 7.5rem; /* Even more spacing on small screens */
+    }
+}
+
+/* Very small screens */
+@media (max-width: 375px) {
+    .chat-messages {
+        margin-bottom: 8rem; /* Maximum spacing on very small screens */
+    }
+}
+
+.chat-input-container:focus-within {
+    box-shadow:
+        0 2px 6px rgba(0, 0, 0, 0.3),
+        0 4px 8px rgba(0, 0, 0, 0.2),
+        0 6px 12px rgba(0, 0, 0, 0.1),
+        0 -4px 8px rgba(0, 0, 0, 0.15), /* Reduced upward shadow */
+        inset 0 1px 2px rgba(255, 255, 255, 0.1);
+}
+
+.chat-input-container:not(:focus-within) {
+    /* Shadow is now handled by the main .chat-input-container style */
+}
+
+
+.chat-input {
+    flex-grow: 1;
+    width: 100%; /* Full width since send button is now in footer */
+    background-color: transparent; /* Changed to transparent to blend with container */
+    font-size: clamp(1.2rem, 2.5vw, 0.8rem);
+    color: #ccc;
+    border: none;
+    padding: 8px 10px; /* Minimal padding for compact appearance */
+    padding-left: 16px;
+    outline: none;
+    border-radius: 18px; /* More rounded to match container */
+    margin-right: 0; /* No need for margin since send button is now in footer */
+    min-width: 0;
+    resize: none; /* Prevent manual resizing */
+    overflow-y: auto; /* Enable scrolling for content that exceeds max height */
+    line-height: 1.5; /* Consistent line height */
+    max-height: 96px; /* Max height for 4 lines (24px line height × 4) */
+    min-height: 24px; /* Min height for 1 line */
+    display: block; /* Ensure proper display */
+    font-family: inherit; /* Match the font of the rest of the app */
+    box-shadow: none; /* Removed inner shadow to blend better */
+    transition: box-shadow 0.2s ease;
+    
+    /* Hide scrollbar but keep functionality */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+}
+
+.chat-input:focus {
+    box-shadow: none; /* No shadow when focused to maintain blended look */
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.chat-input::-webkit-scrollbar {
+    display: none;
+}
+
+.send-button {
+  background-color: #ff9800;
+  color: white;
+  border: none;
+  padding: 9px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  height: 44px;
+  width: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* margin-bottom: 0px; */
+  margin-right: -8px;
+  /* margin-left: 0px; */
+  z-index: 101;
+  box-shadow: 0 1px 2px rgba(31, 41, 55, 0.04),
+              0 2px 4px rgba(255, 198, 112, 0.05),
+              0 3px 6px rgba(31, 41, 55, 0.04),
+              0 4px 8px rgba(255, 145, 77, 0.05);
+  border: 1px solid rgba(204, 215, 230, 0.8);
+  margin-top: -24px; /* Better alignment with dropdown */
+}
+
+.send-button:hover {
+  background-color: #e68a00;
+}
+
+.send-button svg {
+  font-size: 1.2rem;
+}
+
+/* Settings Modal */
+.settings-modal {
+  position: fixed;
+  top: 44%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15), 0 3px 8px rgba(0, 0, 0, 0.1);
+  z-index: 5;
+  color: #333;
+  width: calc(100% - 40px);
+  max-width: 480px;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  opacity: 1;
+    font-family: 'Inter', sans-serif;
+     font-size: clamp(1.2rem, 2.5vw, 0.8rem);
+  padding: 16px;
+}
+
+.settings-content {
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: none;
+}
+
+.settings-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.input-group label {
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: #444;
+  margin-left: 2px;
+}
+
+.input-group input,
+.input-group select {
+  padding: 12px 16px;
+  border-radius: 12px;
+  background-color: #ffffff;
+  color: #333;
+  border: 1px solid #ccc;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+    font-size: clamp(1.3rem, 2.5vw, 1.2rem);
+}
+
+.input-group input:focus,
+.input-group select:focus {
+  outline: none;
+  border-color: #ff9800;
+  box-shadow: 0 0 6px rgba(255, 152, 0, 0.4);
+}
+
+.button-group {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.button-group button,
+.close-button {
+  background-color: #ffa117;
+  color: white;
+  border: none;
+  padding: 18px 14px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  flex: 1;
+    font-size: clamp(1.2rem, 2.5vw, 0.8rem);
+}
+
+.button-group button:hover,
+.close-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(255, 152, 0, 0.3);
+}
+
+.button-group button:active,
+.close-button:active {
+  transform: translateY(0);
+}
+
+.close-button {
+  background-color: #7f8c8d;
+}
+
+.close-button:hover {
+  box-shadow: 0 4px 10px rgba(127, 140, 141, 0.3);
+}
+
+@media (max-width: 480px) {
+  .settings-modal {
+    width: calc(100% - 24px);
+  }
+}
+
+/* Error Message */
+.error-message {
+  color: #ff3b30;
+  padding: 10px;
+  text-align: center;
+}
+
+/* Footer */
+.footer {
+  background-color: #eee;
+  padding: 10px;
+  text-align: center;
+  font-size: 0.8rem;
+  color: #888;
+  box-shadow: 0px -2px 4px rgba(0, 0, 0, 0.25);
+}
+
+.copy-message {
+  position: fixed;
+  bottom: 120px;   /* Moved up a bit to be above the input area */
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255, 152, 0, 0.95);
+  color: white;
+  padding: 16px 32px;
+  border-radius: 50px;
+  font-size: 1.4rem;
+  z-index: 9999;  /* Much higher z-index */
+  transition: all 0.3s cubic-bezier(.25,.8,.25,1);
+  box-shadow: 0 1px 1px rgba(255, 198, 112, 0.08),
+              0 2px 2px rgba(255, 198, 112, 0.08),
+              0 4px 4px rgba(255, 145, 77, 0.08),
+              0 8px 8px rgba(255, 145, 77, 0.08);
+  pointer-events: none; /* Let clicks pass through */
+}
+
+@media (max-width: 768px) {
+  .copy-message {
+    width: calc(100% - 40px);
+    text-align: center;
+  }
+}
+
+
+
+
+
+
+/* Dark Theme Overrides */
+body {
+  background-color: #121212; /* Changed from #000000 to very dark gray */
+  color: #e5e5e5;
+}
+
+/* Header styles are now unified for both light and dark themes */
+/* The header now uses rgba colors with transparency that work well in both themes */
+
+.user-message {
+  background: linear-gradient(160deg, #2a2a2a, #222222);
+  color: #f0f0f0;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.2),
+    0 4px 12px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.user-message:hover {
+  box-shadow:
+    0 3px 10px rgba(0, 0, 0, 0.25),
+    0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
+.assistant-message {
+  background: linear-gradient(170deg, #222222, #1e1e1e);
+  color: #f0f0f0;
+  border-left: 3px solid #ff9800;
+  border-top: 1px solid rgba(255, 152, 0, 0.1);
+  border-right: 1px solid rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.2),
+    0 4px 12px rgba(0, 0, 0, 0.1);
+  /* margin-bottom is inherited from the main styles */
+}
+
+.assistant-message:hover {
+  box-shadow:
+    0 3px 10px rgba(0, 0, 0, 0.25),
+    0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
+.chat-messages::-webkit-scrollbar-thumb {
+  background: #111111;
+}
+
+.chat-messages::-webkit-scrollbar-thumb:hover {
+  background: #1a1a1a;
+}
+
+.chat-messages {
+  scrollbar-color: #111111 transparent;
+}
+
+.message-actions-container {
+  background-color: rgba(26, 26, 26, 0.95);
+  backdrop-filter: blur(4px);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.2),
+    0 4px 12px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  /* No need to override position properties as they're inherited from the main styles */
+  /* z-index is inherited from the main styles */
+}
+
+.message-actions-container:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 4px 10px rgba(0, 0, 0, 0.25),
+    0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
+.copy-button,
+.retry-button {
+  background-color: rgba(42, 42, 42, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.15),
+    0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.copy-button::after,
+.retry-button::after {
+  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+}
+
+.copy-button:hover,
+.retry-button:hover {
+  background-color: #333333;
+  transform: translateY(-2px);
+  box-shadow:
+    0 4px 8px rgba(0, 0, 0, 0.2),
+    0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.copy-button:hover::after,
+.retry-button:hover::after {
+  opacity: 0.3;
+}
+
+.copy-button svg,
+.retry-button svg {
+  color: #dedede;
+}
+
+.typing-indicator::before {
+  background: #1a1a1a;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.typing-indicator span {
+  background: #ffffff;
+}
+
+/* Chat input container styles are now unified for both light and dark themes */
+/* The container now uses rgba colors with transparency that work well in both themes */
+
+.chat-input {
+  background-color: transparent; /* Changed to transparent to blend with container */
+  color: #dedede;
+  /* Other properties are inherited from the main styles */
+}
+
+.chat-input::placeholder {
+  color: #999;
+}
+
+/* Dark mode styles for custom dropdown */
+.dropdown-toggle {
+  background-color: transparent;
+  margin: 8px 9px;
+  color: #999;
+  margin-top: 0px;      /* Increase to move down */
+  margin-bottom: 8px;   /* Increase to move up */
+  margin-left: -2px;     /* Increase to move right */
+  margin-right: 0px;    /* Increase to move left */
+}
+
+.dropdown-toggle:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.dropdown-menu {
+  background-color: #2a2a2a;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.dropdown-item {
+  color: #dedede;
+}
+
+.dropdown-item:hover {
+  background-color: #3a3a3a;
+}
+
+.dropdown-item.active {
+  background-color: #3a3a3a;
+}
+
+.send-button {
+  background-color: #ffffff;
+  color: #000000;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  border: none;
+}
+
+.send-button:hover {
+  background-color: #e0e0e0;
+  box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
+}
+
+.settings-modal {
+  background-color: #222222;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.settings-content {
+  background-color: #222222;
+}
+
+.input-group label {
+  color: #dedede;
+}
+
+.input-group input,
+.input-group select {
+  background-color: #2a2a2a;
+  color: #dedede;
+  border: 1px solid #111111;
+}
+
+.input-group input:focus,
+.input-group select:focus {
+  border-color: #ffffff;
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.2);
+}
+
+.button-group button {
+  background-color: #ffffff;
+  color: #000000;
+}
+
+.button-group button:hover {
+  box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
+}
+
+.close-button {
+  background-color: #2a2a2a;
+}
+
+.close-button:hover {
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.copy-message {
+  background: rgba(255, 255, 255, 0.9);
+  color: #000000;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+================
+File: src/main.jsx
+================
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App.jsx';
+import './index.css';
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>,
+)
+
+================
+File: src/utils/config.js
+================
+/**
+ * Configuration utility.
+ *
+ * This file handles loading and providing access to the default configuration settings.
+ *
+ * Related files:
+ * - src/App.jsx: Uses this utility to initialize default settings.
+ * - public/config.json: The file containing the default configuration.
+ *
+ * For an overview of all project files, see `src/FILE_MAP.md`.
+ */
+
+import config from '../../public/config.json';
+
+export const getDefaultSettings = () => {
+  console.log('Default settings loaded:', config);
+  return config;
+};
+
+================
+File: src/utils/error.js
+================
+export const handleApiError = (error, source) => {
+  console.error(`API Error in ${source}:`, error);
+  // Consider adding more robust error handling here, such as displaying a user-friendly error message.
+};
+
+================
+File: src/utils/message.js
+================
+/**
+ * Message utility functions.
+ * Provides helper functions for handling message content.
+ *
+ * For an overview of all project files, see `src/FILE_MAP.md`.
+ */
+
+export const getSafeMessageContent = (content) => {
+  if (typeof content === 'string') {
+    return <span dangerouslySetInnerHTML={{ __html: content }} />;
+  } else if (typeof content === 'object') {
+    try {
+      const stringContent = JSON.stringify(content, null, 2); // Format for readability
+      return <pre>{stringContent}</pre>;
+    } catch (error) {
+      console.error("Error stringifying message content:", error);
+      return <span>Error displaying message content.</span>;
+    }
+  } else if (content) { // Check if content is not null or undefined but not a string or object
+    return <span>{String(content)}</span>;
+  } else {
+    return null; // Or a placeholder like <span>No content</span>
+  }
+};
+
+================
+File: src/utils/message.jsx
+================
+import React from 'react';
+
+export const getSafeMessageContent = (content) => { // Ensure getSafeMessageContent is exported
+  if (typeof content === 'string') {
+    return <span dangerouslySetInnerHTML={{ __html: content }} />;
+  } else if (typeof content === 'object') {
+    try {
+      const stringContent = JSON.stringify(content, null, 2);
+      return <pre>{stringContent}</pre>;
+    } catch (error) {
+      console.error("Error stringifying message content:", error);
+      return <span>Error displaying message content.</span>;
+    }
+  } else if (content) {
+    return <span>{String(content)}</span>;
+  } else {
+    return null;
+  }
+};
+
+================
+File: vite.config.js
+================
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+export default defineConfig({
+  plugins: [react()],
+  preview: {
+    host: '0.0.0.0',
+    port: 4173,
+    strictPort: true,
+    allowedHosts: ['chat.sadoway.ca']  // Replace with your domain
+  },
+  server: {
+    host: '0.0.0.0',
+    port: 4173,
+    strictPort: true,
+    allowedHosts: ['chat.sadoway.ca']  // Replace with your domain
+  },
+  build: {
+    minify: 'esbuild'
+  },
+  optimizeDeps: {
+    esbuildOptions: {
+      target: 'esnext'
+    }
+  }
+})
+
+
+
+================================================================
+End of Codebase
+================================================================

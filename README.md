@@ -1,4 +1,4 @@
-# L2PC Ollama Portal
+# chat.sadoway
 
 A web-based interface for interacting with Ollama models, designed to run on Unraid.
 
@@ -16,12 +16,12 @@ A web-based interface for interacting with Ollama models, designed to run on Unr
 
 2. **Clone the Repository**
    ```bash
-   git clone https://github.com/sadoway7/L2PC-Ollama-Portal.git
+   git clone https://github.com/sadoway7/chat-sadoway.git
    ```
 
 3. **Configure Domain Access**
    ```bash
-   cd L2PC-Ollama-Portal
+   cd chat-sadoway
    nano vite.config.js
    ```
    
@@ -58,7 +58,7 @@ A web-based interface for interacting with Ollama models, designed to run on Unr
    - Configure the following settings:
 
    **Basic Configuration:**
-   - Name: `L2PC-Ollama-Portal`
+   - Name: `chat-sadoway`
    - Repository: `node:20-slim`
    - Network Type: `Bridge`
    - Console: `Shell`
@@ -71,7 +71,7 @@ A web-based interface for interacting with Ollama models, designed to run on Unr
    **Path Configuration:**
    - Config Type: `Path`
    - Name: `App Data`
-   - Host Path: `/mnt/user/appdata/L2PC-Ollama-Portal`
+   - Host Path: `/mnt/user/appdata/chat-sadoway`
    - Container Path: `/app`
 
    **Port Configuration:**

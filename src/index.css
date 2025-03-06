@@ -33,53 +33,164 @@ body {
   top: 0;
   left: 0;
   right: 0;
-  background-color: #fff;
-  padding: 2px clamp(15px, 2vw, 50px);
+  background: linear-gradient(180deg, rgba(18, 18, 18, 0.95) 0%, rgba(18, 18, 18, 0.85) 80%, rgba(18, 18, 18, 0) 100%); /* Gradient that fades to transparent */
+  padding: 0 clamp(12px, 4vw, 24px); /* Adjusted padding */
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
-  z-index: 2;
+  border-bottom: none; /* Removed border completely */
+  z-index: 10; /* Increased z-index to ensure it stays on top */
+  height: 60px; /* Fixed height for consistency */
+  transition: opacity 0.3s ease;
 }
 
+.chat-header:hover {
+  opacity: 0.98; /* Subtle hover effect */
+}
 
-.chat-header h2 {
-  font-size: 1.0rem;
-  padding: 20px;
+/* Logo container */
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 100%;
+}
+
+/* Logo SVG */
+.logo-svg {
+  width: 32px;
+  height: 32px;
+  transition: transform 0.3s ease;
+}
+
+.logo-container:hover .logo-svg {
+  transform: rotate(5deg) scale(1.05);
+}
+
+/* Logo text */
+.logo-text {
+  font-size: clamp(1.1rem, 1.3vw, 1.3rem); /* Slightly larger font */
+  font-weight: 600; /* Bolder for business look */
+  padding: 0;
   margin: 0;
-  color: #333;
-  border-radius: 15px;
+  color: rgba(229, 229, 229, 0.95); /* Slightly more opaque */
+  letter-spacing: 0.03em; /* Increased letter spacing for tech feel */
+  display: flex;
+  align-items: center;
+  height: 100%;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15); /* Enhanced text shadow */
+  font-family: 'Segoe UI', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif; /* Modern tech font stack */
+}
+
+/* Dot styling */
+.logo-dot {
+  color: #ffffff; /* White to match the SVG */
+  font-weight: 700;
+  margin: 0 1px;
+}
+
+.logo-container:hover .logo-text {
+  color: rgba(229, 229, 229, 1); /* Full opacity on hover */
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.25); /* Enhanced shadow on hover */
+  transform: translateY(-1px); /* Subtle lift effect */
 }
 
 .header-buttons {
   display: flex;
   align-items: center;
-  padding: vertical;
+  gap: 8px; /* Modern gap property instead of margins */
+  height: 100%;
 }
 
 .header-buttons button {
-  background: #f7f7f2;
-  border: none;
-  color: #333;
-  font-size: 1rem;
+  background: rgba(42, 42, 42, 0.3); /* More transparent background */
+  border: none; /* Removed border completely */
+  color: rgba(229, 229, 229, 0.85); /* Semi-transparent text for better blending */
+  font-size: 0.9rem;
   cursor: pointer;
-  margin-left: 10px;
-  padding: 8px 13px;
-  border-radius: 15px;
-  transition: background-color 0.3s ease;
+  padding: 6px 12px; /* Slightly reduced padding */
+  border-radius: 12px; /* Slightly reduced border radius */
+  transition: all 0.2s ease; /* Smooth transition for all properties */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: none; /* Removed shadow completely */
 }
 
 .header-buttons button:hover {
-  background-color: #c3f7cb;
+  background-color: rgba(255, 255, 255, 0.1); /* Subtle hover effect */
+  color: rgba(229, 229, 229, 1); /* Full opacity on hover */
+}
+
+.header-buttons button:active {
+  background-color: rgba(255, 255, 255, 0.15); /* Slightly more visible when active */
 }
 
 .settings-button svg {
-  font-size: 1.1rem;
-  padding-top: 0.2rem;
+  font-size: 1rem;
+  transition: transform 0.2s ease;
+}
+
+.settings-button:hover svg {
+  transform: rotate(15deg); /* Subtle rotation on hover */
+}
+
+/* Mobile adjustments for header */
+@media (max-width: 480px) {
+  .chat-header {
+    padding: 0 12px; /* Reduced padding on small screens */
+    height: 50px; /* Slightly smaller height on mobile */
+    background: linear-gradient(180deg, rgba(18, 18, 18, 0.92) 0%, rgba(18, 18, 18, 0.8) 80%, rgba(18, 18, 18, 0) 100%); /* Slightly adjusted gradient for mobile */
+  }
+  
+  .header-buttons button {
+    padding: 5px 10px; /* Smaller padding on mobile */
+    font-size: 0.85rem; /* Smaller font on mobile */
+  }
+  
+  .settings-button svg {
+    font-size: 0.9rem; /* Smaller icon on mobile */
+  }
+  
+  /* Mobile logo adjustments */
+  .logo-svg {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .logo-text {
+    font-size: 1rem;
+  }
+  
+  .logo-container {
+    gap: 8px;
+  }
+  
+  .chat-messages {
+    top: 35px; /* Reduced to allow content to flow under the header gradient on mobile */
+    padding-top: 15px; /* Slightly reduced padding on mobile */
+    padding-bottom: 25px; /* Slightly reduced bottom padding on mobile */
+    /* Adjusted fade for mobile - both top and bottom */
+    mask-image: linear-gradient(
+      to bottom,
+      transparent 0%,
+      black 15px,
+      black calc(100% - 100px),
+      transparent 100%
+    );
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      transparent 0%,
+      black 15px,
+      black calc(100% - 100px),
+      transparent 100%
+    );
+  }
 }
 
 .chat-messages {
-    top: 9px;
+    top: 40px; /* Reduced to allow content to flow under the header gradient */
     bottom: 25px;
     position: fixed;
     overflow-y: scroll;
@@ -90,8 +201,26 @@ body {
     max-width: 900px;
     bottom: 6px;
     margin-bottom: 6.5rem; /* Increased from 4.9rem to create more space */
-    margin-top: 60px;
+    margin-top: 0; /* Removed margin-top since we're using top value */
     -webkit-overflow-scrolling: touch;
+    transition: top 0.3s ease; /* Smooth transition when header height changes */
+    padding-top: 20px; /* Add padding to ensure first messages don't appear directly under header */
+    padding-bottom: 30px; /* Add padding at the bottom for fade-out effect */
+    /* Fade in at top and fade out at bottom */
+    mask-image: linear-gradient(
+        to bottom,
+        transparent 0%,
+        black 20px,
+        black calc(100% - 120px),
+        transparent 100%
+    );
+    -webkit-mask-image: linear-gradient(
+        to bottom,
+        transparent 0%,
+        black 20px,
+        black calc(100% - 120px),
+        transparent 100%
+    );
 
     /* Webkit scrollbar styles */
     &::-webkit-scrollbar {
@@ -530,21 +659,36 @@ body {
     transform: translateX(-50%);
     width: calc(100% - 40px);
     max-width: 600px;
-    background-color: rgba(51, 51, 51, 0.98); /* Slightly transparent for better blending */
+    background-color: rgba(42, 42, 42, 0.92); /* More transparent for better blending */
     padding: 6px 6px; /* Minimal padding for compact appearance */
     border-radius: 22px; /* More rounded to match send button */
     box-shadow:
-        0 2px 6px rgba(0, 0, 0, 0.3),
-        0 4px 10px rgba(0, 0, 0, 0.2),
-        0 8px 20px rgba(0, 0, 0, 0.1),
-        0 -5px 15px rgba(0, 0, 0, 0.15), /* Added upward shadow for better fade effect */
-        inset 0 1px 1px rgba(255, 255, 255, 0.05);
+        0 1px 4px rgba(0, 0, 0, 0.25),
+        0 2px 6px rgba(0, 0, 0, 0.15),
+        0 4px 8px rgba(0, 0, 0, 0.08),
+        0 -3px 6px rgba(0, 0, 0, 0.12), /* Reduced upward shadow for better fade effect */
+        inset 0 1px 1px rgba(255, 255, 255, 0.03);
     z-index: 20; /* Adjusted to be lower than message-actions-container (50) */
-    transition: box-shadow 0.3s cubic-bezier(.25,.8,.25,1), height 0.2s ease; /* Added height transition */
+    transition: box-shadow 0.3s cubic-bezier(.25,.8,.25,1), height 0.2s ease, opacity 0.3s ease; /* Added opacity transition */
     display: flex;
     flex-direction: column; /* Changed to column to allow for options row at bottom */
     min-height: 34px; /* Further reduced minimum height */
     backdrop-filter: blur(5px); /* Added blur effect for content behind */
+    /* Add subtle gradient to top edge to blend with faded messages */
+    border: 1px solid rgba(255, 255, 255, 0.03);
+    border-top: none;
+    /* Gradient overlay to blend with the faded messages */
+    &::before {
+        content: '';
+        position: absolute;
+        top: -40px;
+        left: 0;
+        right: 0;
+        height: 40px;
+        background: linear-gradient(to bottom, rgba(18, 18, 18, 0), rgba(18, 18, 18, 0.5));
+        pointer-events: none;
+        z-index: -1;
+    }
 }
 
 /* Main input area with textarea and send button */
@@ -643,10 +787,10 @@ body {
 
 .chat-input-container:hover {
       box-shadow:
-        0 4px 8px rgba(0, 0, 0, 0.35),
-        0 8px 16px rgba(0, 0, 0, 0.25),
-        0 12px 28px rgba(0, 0, 0, 0.15),
-        0 -6px 16px rgba(0, 0, 0, 0.2), /* Enhanced upward shadow for better fade effect */
+        0 2px 6px rgba(0, 0, 0, 0.35),
+        0 4px 8px rgba(0, 0, 0, 0.25),
+        0 6px 12px rgba(0, 0, 0, 0.15),
+        0 -4px 8px rgba(0, 0, 0, 0.15), /* Reduced upward shadow for better fade effect */
         inset 0 1px 2px rgba(255, 255, 255, 0.1);
       transition: box-shadow 0.3s ease;
 }
@@ -700,10 +844,10 @@ body {
 
 .chat-input-container:focus-within {
     box-shadow:
-        0 3px 8px rgba(0, 0, 0, 0.3),
-        0 6px 12px rgba(0, 0, 0, 0.2),
-        0 9px 24px rgba(0, 0, 0, 0.1),
-        0 -5px 15px rgba(0, 0, 0, 0.15), /* Maintained upward shadow */
+        0 2px 6px rgba(0, 0, 0, 0.3),
+        0 4px 8px rgba(0, 0, 0, 0.2),
+        0 6px 12px rgba(0, 0, 0, 0.1),
+        0 -4px 8px rgba(0, 0, 0, 0.15), /* Reduced upward shadow */
         inset 0 1px 2px rgba(255, 255, 255, 0.1);
 }
 
@@ -767,9 +911,9 @@ body {
   /* margin-left: 0px; */
   z-index: 101;
   box-shadow: 0 1px 2px rgba(31, 41, 55, 0.04),
-              0 3px 6px rgba(255, 198, 112, 0.05),
-              0 6px 12px rgba(31, 41, 55, 0.04),
-              0 12px 24px rgba(255, 145, 77, 0.05);
+              0 2px 4px rgba(255, 198, 112, 0.05),
+              0 3px 6px rgba(31, 41, 55, 0.04),
+              0 4px 8px rgba(255, 145, 77, 0.05);
   border: 1px solid rgba(204, 215, 230, 0.8);
   margin-top: -24px; /* Better alignment with dropdown */
 }
@@ -951,23 +1095,8 @@ body {
   color: #e5e5e5;
 }
 
-.chat-header {
-  background-color: #1a1a1a;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-}
-
-.chat-header h2 {
-  color: #e5e5e5;
-}
-
-.header-buttons button {
-  background: #2a2a2a;
-  color: #dedede;
-}
-
-.header-buttons button:hover {
-  background-color: #222222;
-}
+/* Header styles are now unified for both light and dark themes */
+/* The header now uses rgba colors with transparency that work well in both themes */
 
 .user-message {
   background: linear-gradient(160deg, #2a2a2a, #222222);
@@ -1075,26 +1204,8 @@ body {
   background: #ffffff;
 }
 
-.chat-input-container {
-  background-color: rgba(42, 42, 42, 0.98); /* Slightly transparent for better blending */
-  box-shadow:
-    0 2px 6px rgba(0, 0, 0, 0.3),
-    0 4px 10px rgba(0, 0, 0, 0.2),
-    0 8px 20px rgba(0, 0, 0, 0.1),
-    0 -5px 15px rgba(0, 0, 0, 0.15), /* Added upward shadow for better fade effect */
-    inset 0 1px 1px rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(5px); /* Added blur effect for content behind */
-  /* Other properties are inherited from the main styles */
-}
-
-.chat-input-container:hover {
-  box-shadow:
-    0 4px 8px rgba(0, 0, 0, 0.35),
-    0 8px 16px rgba(0, 0, 0, 0.25),
-    0 12px 28px rgba(0, 0, 0, 0.15),
-    0 -6px 16px rgba(0, 0, 0, 0.2), /* Enhanced upward shadow for better fade effect */
-    inset 0 1px 2px rgba(255, 255, 255, 0.05);
-}
+/* Chat input container styles are now unified for both light and dark themes */
+/* The container now uses rgba colors with transparency that work well in both themes */
 
 .chat-input {
   background-color: transparent; /* Changed to transparent to blend with container */
