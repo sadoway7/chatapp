@@ -1,8 +1,17 @@
-import React, { useRef, useEffect } from 'react';
-import { FiSend } from 'react-icons/fi';
+import React, { useRef, useEffect, useState } from 'react';
+import { FiSend, FiChevronDown, FiChevronUp } from 'react-icons/fi';
 
-const ChatInput = ({ input, setInput, handleSend }) => {
+const ChatInput = ({
+  input,
+  setInput,
+  handleSend,
+  selectedModel,
+  setSelectedModel,
+  models = []
+}) => {
   const textareaRef = useRef(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
 
   // Auto-resize the textarea based on content
   useEffect(() => {
@@ -20,12 +29,35 @@ const ChatInput = ({ input, setInput, handleSend }) => {
     }
   }, [input]);
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   const handleKeyDown = (e) => {
     // Send message on Enter (without Shift key)
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault(); // Prevent default to avoid new line
       handleSend();
     }
+  };
+
+  const toggleDropdown = () => {
+    setDropdownOpen(!dropdownOpen);
+  };
+
+  const selectModel = (model) => {
+    setSelectedModel(model);
+    setDropdownOpen(false);
   };
 
   return (
@@ -40,11 +72,36 @@ const ChatInput = ({ input, setInput, handleSend }) => {
           onKeyDown={handleKeyDown}
           rows="1"
         />
+      </div>
+      <div className="input-footer">
+        {models.length > 0 && (
+          <div className="custom-dropdown" ref={dropdownRef}>
+            <button
+              className="dropdown-toggle"
+              onClick={toggleDropdown}
+              title="Select AI Model"
+            >
+              {selectedModel} {dropdownOpen ? <FiChevronUp /> : <FiChevronDown />}
+            </button>
+            {dropdownOpen && (
+              <div className="dropdown-menu">
+                {models.map(model => (
+                  <button
+                    key={model}
+                    className={`dropdown-item ${model === selectedModel ? 'active' : ''}`}
+                    onClick={() => selectModel(model)}
+                  >
+                    {model}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
         <button className="send-button" onClick={handleSend}>
           <FiSend />
         </button>
       </div>
-      {/* Options row can be added here later */}
     </div>
   );
 };
