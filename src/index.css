@@ -168,13 +168,13 @@ body {
   color: #333;
   margin-left: 16px;
   margin-top: 5px;
-  margin-bottom: 20px;
+  margin-bottom: 35px; /* Increased to accommodate the lower toolbar */
   font-size: 1.1rem;
   border-radius: 0px 15px 15px 15px;
   border-left: 3px solid #ff9800;
   position: relative;
   animation: popInassistant 0.2s ease forwards;
-  box-shadow: 
+  box-shadow:
     0 2px 1px rgba(255, 152, 0, 0.06),
     0 4px 2px rgba(255, 152, 0, 0.06),
     0 8px 4px rgba(255, 152, 0, 0.06),
@@ -200,52 +200,86 @@ body {
 
 .message-actions-container {
   position: absolute;
-  bottom: -1px;
-  right: -50px;  /* Default for larger screens */
+  bottom: -30px;  /* Moved down further from the text */
+  left: 10px;  /* Position at the bottom left */
   display: flex;
-  flex-direction: column;
+  flex-direction: row;  /* Changed to row for horizontal layout */
   border-radius: 20px;
-  padding: 8px 6px;
+  padding: 6px 8px;
   background-color: #fff;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+  z-index: 5; /* Added to ensure it appears above other elements */
+}
+
+@media (max-width: 500px) {
+  .message-actions-container {
+    padding: 4px 6px; /* More compact on mobile */
+  }
 }
 
 /* Media queries for different screen sizes */
 @media (max-width: 1200px) {
   .message-actions-container {
-    right: -48px;
+    left: 10px;
   }
 }
 
 @media (max-width: 992px) {
   .message-actions-container {
-    right: -48px;
+    left: 10px;
   }
 }
 
 @media (max-width: 768px) {
   .message-actions-container {
-    right: -50px;
+    bottom: -27px; /* Adjusted for medium screens, moved down further */
+    left: 10px;
+  }
+  
+  .assistant-message {
+    margin-bottom: 32px; /* Increased to accommodate the lower toolbar */
   }
 }
 
 @media (max-width: 576px) {
   .message-actions-container {
-    right: -50px;
+    bottom: -25px; /* Adjusted for small screens, moved down further */
+    left: 10px;
+  }
+  
+  .assistant-message {
+    margin-bottom: 30px; /* Increased to accommodate the lower toolbar */
   }
 }
 
 /* For very small screens */
 @media (max-width: 375px) {
   .message-actions-container {
-    right: -50px;
-  }n
+    bottom: -22px; /* Further adjusted for very small screens, moved down further */
+    left: 8px;
+    padding: 3px 5px; /* Even more compact for very small screens */
+  }
+  
+  .assistant-message {
+    margin-bottom: 28px; /* Increased to accommodate the lower toolbar */
+  }
+  
+  .copy-button,
+  .retry-button {
+    width: 24px;
+    height: 24px;
+    margin: 0 2px;
+  }
+  
+  .message-actions {
+    gap: 4px; /* Minimal gap for very small screens */
+  }
 }
 
 .message-actions {
   display: flex;
-  flex-direction: column;
-  gap: 5px;
+  flex-direction: row;  /* Changed to row for horizontal layout */
+  gap: 10px;  /* Increased gap for better spacing between buttons */
 }
 
 .copy-button,
@@ -261,13 +295,9 @@ body {
   width: 24px;
   height: 24px;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), 
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1),
               0 1px 8px rgba(0, 0, 0, 0.05);
-  margin-bottom: 10px;
-}
-
-.retry-button {
-  margin-bottom: 0;
+  margin: 0 2px; /* Changed from margin-bottom to horizontal margins */
 }
 
 .copy-button:hover,
@@ -287,13 +317,18 @@ body {
 @media (max-width: 500px) {
   .copy-button,
   .retry-button {
-    width: 30px;
-    height: 30px;
+    width: 26px;
+    height: 26px;
+    margin: 0 3px; /* Slightly increased horizontal spacing */
   }
   
   .copy-button svg,
   .retry-button svg {
-    font-size: 1.15rem;
+    font-size: 1rem;
+  }
+  
+  .message-actions {
+    gap: 6px; /* Reduced gap for mobile */
   }
 }
 
@@ -385,15 +420,34 @@ body {
     width: calc(100% - 40px);
     max-width: 600px;
     background-color: #fff;
-    padding: 10px;
-    border-radius: 50px;
+    padding: 8px 10px; /* Adjusted padding for better alignment */
+    border-radius: 25px; /* Reduced from 50px to be less rounded */
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12),
               0 1px 2px rgba(0, 0, 0, 0.24);
     z-index: 100;
-    transition: box-shadow 0.3s cubic-bezier(.25,.8,.25,1); /* Added smooth box-shadow */
+    transition: box-shadow 0.3s cubic-bezier(.25,.8,.25,1), height 0.2s ease; /* Added height transition */
     display: flex;
+    flex-direction: column; /* Changed to column to allow for options row at bottom */
+    min-height: 46px; /* Minimum height to match original size */
+}
+
+/* Main input area with textarea and send button */
+.chat-input-container .input-row {
+    display: flex;
+    width: 100%;
+    align-items: flex-end; /* Changed to flex-end to align items at the bottom */
+    position: relative;
+    min-height: 46px; /* Ensure minimum height matches the send button */
+}
+
+/* Future options row can be added here
+.chat-input-container .options-row {
+    display: flex;
+    padding-top: 5px;
+    justify-content: flex-start;
     align-items: center;
 }
+*/
 
 .chat-input-container:hover {
       box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25),
@@ -407,6 +461,15 @@ body {
         width: calc(100% - 60px);
         bottom: 25px;
     }
+    
+    .chat-input {
+        padding: 8px 12px;
+        max-height: 88px; /* Slightly smaller max height on mobile */
+    }
+    
+    .send-button {
+        /* No need to override position on mobile, the percentage-based positioning works for all sizes */
+    }
 }
 
 /* Even more padding for very small screens */
@@ -414,6 +477,12 @@ body {
     .chat-input-container {
         width: calc(100% - 60px);
         bottom: 25px;
+        padding: 8px; /* Slightly smaller padding */
+    }
+    
+    .chat-input {
+        padding: 6px 10px;
+        font-size: clamp(1rem, 2vw, 0.8rem); /* Slightly smaller font */
     }
 }
 
@@ -434,18 +503,34 @@ body {
     font-size: clamp(1.2rem, 2.5vw, 0.8rem);
     color: #333;
     border: none;
-    padding: 6px 14px;
+    padding: 12px 14px 12px 14px; /* Increased vertical padding for better alignment */
     outline: none;
-    border-radius: 20px;
+    border-radius: 18px; /* Reduced from 20px to be less rounded */
     margin-right: 46px; /* Added margin to prevent overlap with send button */
     min-width: 0;
+    resize: none; /* Prevent manual resizing */
+    overflow-y: auto; /* Enable scrolling for content that exceeds max height */
+    line-height: 1.5; /* Consistent line height */
+    max-height: 96px; /* Max height for 4 lines (24px line height × 4) */
+    min-height: 24px; /* Min height for 1 line */
+    display: block; /* Ensure proper display */
+    font-family: inherit; /* Match the font of the rest of the app */
+    
+    /* Hide scrollbar but keep functionality */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.chat-input::-webkit-scrollbar {
+    display: none;
 }
 
 .send-button {
   background-color: #ff9800;
   color: white;
   border: none;
-  padding: 8px;
+  padding: 9px;
   border-radius: 50%;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -455,16 +540,15 @@ body {
   align-items: center;
   justify-content: center;
   position: absolute;
-  right: 8px;
-  top: 49.5%;
-	z-index: 101;
-  transform: translateY(-49%);
-box-shadow: 0 1px 2px rgba(31, 41, 55, 0.04),
-            0 3px 6px rgba(255, 198, 112, 0.05),
-            0 6px 12px rgba(31, 41, 55, 0.04),
-            0 12px 24px rgba(255, 145, 77, 0.05);
-
-border: 1px solid rgba(226, 232, 240, 0.8);
+  right: 2px;
+  bottom: 4px; /* Position at the bottom */
+  margin-bottom: 0; /* Ensure no margin at the bottom */
+  z-index: 101;
+  box-shadow: 0 1px 2px rgba(31, 41, 55, 0.04),
+              0 3px 6px rgba(255, 198, 112, 0.05),
+              0 6px 12px rgba(31, 41, 55, 0.04),
+              0 12px 24px rgba(255, 145, 77, 0.05);
+  border: 1px solid rgba(204, 215, 230, 0.8);
 }
 
 .send-button:hover {
@@ -675,6 +759,7 @@ body {
   border-left: 3px solid #ffffff;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2),
               0 0 6px rgba(255, 255, 255, 0.1);
+  /* margin-bottom is inherited from the main styles */
 }
 
 .chat-messages::-webkit-scrollbar-thumb {
@@ -692,6 +777,8 @@ body {
 .message-actions-container {
   background-color: #1a1a1a;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  /* No need to override position properties as they're inherited from the main styles */
+  /* z-index is inherited from the main styles */
 }
 
 .copy-button,
@@ -724,6 +811,7 @@ body {
 .chat-input-container {
   background-color: #2a2a2a;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  /* Other properties are inherited from the main styles */
 }
 
 .chat-input-container:hover {
@@ -733,6 +821,7 @@ body {
 .chat-input {
   background-color: #2a2a2a;
   color: #dedede;
+  /* Other properties are inherited from the main styles */
 }
 
 .chat-input::placeholder {
