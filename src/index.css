@@ -422,8 +422,11 @@ body {
     background-color: #333;
     padding: 6px 6px; /* Minimal padding for compact appearance */
     border-radius: 22px; /* More rounded to match send button */
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12),
-              0 1px 2px rgba(0, 0, 0, 0.24);
+    box-shadow:
+        0 2px 4px rgba(0, 0, 0, 0.2),
+        0 4px 8px rgba(0, 0, 0, 0.1),
+        0 8px 16px rgba(0, 0, 0, 0.05),
+        inset 0 1px 1px rgba(255, 255, 255, 0.05);
     z-index: 100;
     transition: box-shadow 0.3s cubic-bezier(.25,.8,.25,1), height 0.2s ease; /* Added height transition */
     display: flex;
@@ -526,8 +529,12 @@ body {
 }
 
 .chat-input-container:hover {
-      box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25),
-                0 10px 10px rgba(0, 0, 0, 0.22);
+      box-shadow:
+        0 4px 6px rgba(0, 0, 0, 0.3),
+        0 8px 12px rgba(0, 0, 0, 0.2),
+        0 12px 24px rgba(0, 0, 0, 0.1),
+        inset 0 1px 2px rgba(255, 255, 255, 0.07);
+      transition: box-shadow 0.3s ease;
 }
 
 
@@ -575,7 +582,7 @@ body {
 .chat-input {
     flex-grow: 1;
     width: 100%; /* Full width since send button is now in footer */
-    background-color: #333;
+    background-color: transparent; /* Changed to transparent to blend with container */
     font-size: clamp(1.2rem, 2.5vw, 0.8rem);
     color: #ccc;
     border: none;
@@ -592,10 +599,16 @@ body {
     min-height: 24px; /* Min height for 1 line */
     display: block; /* Ensure proper display */
     font-family: inherit; /* Match the font of the rest of the app */
+    box-shadow: none; /* Removed inner shadow to blend better */
+    transition: box-shadow 0.2s ease;
     
     /* Hide scrollbar but keep functionality */
     scrollbar-width: none; /* Firefox */
     -ms-overflow-style: none; /* IE and Edge */
+}
+
+.chat-input:focus {
+    box-shadow: none; /* No shadow when focused to maintain blended look */
 }
 
 /* Hide scrollbar for Chrome, Safari and Opera */
@@ -801,7 +814,7 @@ body {
 
 /* Dark Theme Overrides */
 body {
-  background-color: #000000;
+  background-color: #121212; /* Changed from #000000 to very dark gray */
   color: #e5e5e5;
 }
 
@@ -887,7 +900,11 @@ body {
 
 .chat-input-container {
   background-color: #2a2a2a;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.2),
+    0 4px 8px rgba(0, 0, 0, 0.1),
+    0 8px 16px rgba(0, 0, 0, 0.05),
+    inset 0 1px 1px rgba(255, 255, 255, 0.03);
   /* Other properties are inherited from the main styles */
 }
 
@@ -896,7 +913,7 @@ body {
 }
 
 .chat-input {
-  background-color: #2a2a2a;
+  background-color: transparent; /* Changed to transparent to blend with container */
   color: #dedede;
   /* Other properties are inherited from the main styles */
 }
