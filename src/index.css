@@ -2188,15 +2188,20 @@ body {
 
 /* Model loading indicator */
 .model-loading-indicator {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10000; /* Higher than other elements */
   display: flex;
   align-items: center;
   gap: 8px;
-  background-color: rgba(255, 152, 0, 0.15);
-  padding: 4px 12px;
-  border-radius: 16px;
+  background-color: rgba(0, 0, 0, 0.7); /* Dark, semi-transparent background */
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   font-size: 0.9rem;
-  color: #f0f0f0;
-  margin-right: 12px;
 }
 
 .loading-spinner {
