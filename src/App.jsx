@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { FiSquare } from 'react-icons/fi';
 import Header from './components/Header';
 import ChatInput from './components/ChatInput';
 import ChatMessages from './components/ChatMessages';
@@ -20,7 +19,7 @@ function App() {
   const [selectedModel, setSelectedModel] = useState('');
   const [fetchError, setFetchError] = useState(null);
   const [isTyping, setIsTyping] = useState(false);
-  const [activeStreamController, setActiveStreamController] = useState(null);
+  const activeStreamController = useRef(null);
   const [uploadedFile, setUploadedFile] = useState(null);
   const [fileId, setFileId] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -169,41 +168,49 @@ function App() {
     // Set typing indicator but don't add the message yet
     setIsTyping(true);
 
+
     try {
-      // Use streaming API and store the controller
+      console.log('Starting new chat stream...');
       const controller = await sendChatMessageStreaming(
         openWebUIUrl,
         apiKey,
         selectedModel,
         [...messages, userMessage],
         tempFileId,
-        // onChunk callback - add the message if it doesn't exist yet, or update it
+        // onChunk callback
         (chunk) => {
-          setMessages(prevMessages => {
-            const updatedMessages = [...prevMessages];
-            const assistantMessageIndex = updatedMessages.findIndex(msg => msg.id === assistantMessageId);
+          // Keep isTyping true while streaming
+          setIsTyping(true);
+          
+          // Process new chunks while not aborted
+          if (!activeStreamController.current?.signal?.aborted && chunk.trim()) {
+            setMessages(prevMessages => {
+              const updatedMessages = [...prevMessages];
+              const assistantMessageIndex = updatedMessages.findIndex(msg => msg.id === assistantMessageId);
 
-            if (assistantMessageIndex !== -1) {
-              // Message exists, update it
-              updatedMessages[assistantMessageIndex] = {
-                ...updatedMessages[assistantMessageIndex],
-                content: updatedMessages[assistantMessageIndex].content + chunk
-              };
-            } else {
-              // Message doesn't exist yet, add it
-              updatedMessages.push({
-                id: assistantMessageId,
-                role: 'assistant',
-                content: chunk.trim(),
-                isResponseToRetry: false,
-                isStreaming: true
-              });
-            }
+              if (assistantMessageIndex !== -1) {
+                // Message exists, update it
+                updatedMessages[assistantMessageIndex] = {
+                  ...updatedMessages[assistantMessageIndex],
+                  content: updatedMessages[assistantMessageIndex].content + chunk,
+                  isStreaming: true // Keep streaming true while receiving chunks
+                };
+              } else {
+                // Message doesn't exist yet, add it
+                updatedMessages.push({
+                  id: assistantMessageId,
+                  role: 'assistant',
+                  content: chunk.trim(),
+                  isResponseToRetry: false,
+                  isStreaming: true
+                });
+              }
 
-            return updatedMessages;
-          });
+              return updatedMessages;
+            });
+          }
         },
-        // onComplete callback - mark streaming as complete
+        // onComplete callback
         (fullContent) => {
           setMessages(prevMessages => {
             const updatedMessages = [...prevMessages];
@@ -217,13 +224,14 @@ function App() {
             }
             return updatedMessages;
           });
-          setIsTyping(false);
-          setActiveStreamController(null); // Clear the controller when streaming is complete
+          
+          setIsTyping(false); // Always turn off typing indicator when done
+          activeStreamController.current = null;
         }
       );
 
       // Store the controller so we can abort it if needed
-      setActiveStreamController(controller);
+      activeStreamController.current = controller;
     } catch (error) {
       const errorDetails = handleApiError(error, 'handleSendMessage');
       // Check if a message was created and update it, or create a new error message
@@ -259,7 +267,7 @@ function App() {
         return updatedMessages;
       });
       setIsTyping(false);
-      setActiveStreamController(null); // Clear the controller on error
+      activeStreamController.current = null; // Clear the controller on error
     }
   };
 
@@ -323,56 +331,6 @@ function App() {
   const handleClearChat = () => {
     setMessages([]);
   };
-
-  const handleStopGeneration = (messageId) => {
-    console.log('Stopping generation for message:', messageId);
-
-    // If there's an active stream controller, abort it
-    if (activeStreamController) {
-      activeStreamController.abort();
-      setActiveStreamController(null);
-    }
-
-    // Update the message to remove streaming state
-    setMessages(prevMessages => {
-      const updatedMessages = [...prevMessages];
-
-      // Find the streaming message
-      let messageIndex = -1;
-
-      if (messageId) {
-        // If messageId is provided, find that specific message
-        messageIndex = updatedMessages.findIndex(msg => msg.id === messageId);
-      } else {
-        // Otherwise find any streaming message
-        messageIndex = updatedMessages.findIndex(msg => msg.isStreaming);
-      }
-
-      if (messageIndex !== -1) {
-        updatedMessages[messageIndex] = {
-          ...updatedMessages[messageIndex],
-          isStreaming: false,
-          content: updatedMessages[messageIndex].content + " [Generation stopped]"
-        };
-      } else {
-        // If no streaming message found but we're in typing state,
-        // add a new message indicating generation was stopped
-        const lastUserMessageIndex = updatedMessages.findLastIndex(msg => msg.role === 'user');
-        if (lastUserMessageIndex !== -1) {
-          updatedMessages.push({
-            id: Date.now(),
-            role: 'assistant',
-            content: "[Generation stopped before completion]",
-            isStreaming: false
-          });
-        }
-      }
-
-      return updatedMessages;
-    });
-
-    setIsTyping(false);
-  };
   const handleRetrySend = async (retryMessage, originalUserMessageIndex) => {
     setIsTyping(true);
     try {
@@ -400,8 +358,16 @@ function App() {
         selectedModel,
         messagesWithRetry,
         null, // No file ID for retry
-        // onChunk callback - add the message if it doesn't exist yet, or update it
+        // onChunk callback
         (chunk) => {
+          if (activeStreamController.current?.signal?.aborted) {
+            console.log('Skipping chunk in retry - stream was aborted');
+            return;
+          }
+
+          setIsTyping(true);
+          if (!chunk.trim() || activeStreamController.current?.signal?.aborted) return;
+
           setMessages(prevMessages => {
             const updatedMessages = [...prevMessages];
             const assistantMessageIndex = updatedMessages.findIndex(msg => msg.id === assistantMessageId);
@@ -426,27 +392,30 @@ function App() {
             return updatedMessages;
           });
         },
-        // onComplete callback - mark streaming as complete
+        // onComplete callback
         (fullContent) => {
-          setMessages(prevMessages => {
-            const updatedMessages = [...prevMessages];
-            const assistantMessageIndex = updatedMessages.findIndex(msg => msg.id === assistantMessageId);
-            if (assistantMessageIndex !== -1) {
-              updatedMessages[assistantMessageIndex] = {
-                ...updatedMessages[assistantMessageIndex],
-                content: fullContent.trim(),
-                isStreaming: false
-              };
-            }
-            return updatedMessages;
-          });
+          // Skip final update if aborted
+          if (!activeStreamController.current?.signal?.aborted) {
+            setMessages(prevMessages => {
+              const updatedMessages = [...prevMessages];
+              const assistantMessageIndex = updatedMessages.findIndex(msg => msg.id === assistantMessageId);
+              if (assistantMessageIndex !== -1) {
+                updatedMessages[assistantMessageIndex] = {
+                  ...updatedMessages[assistantMessageIndex],
+                  content: fullContent.trim(),
+                  isStreaming: false
+                };
+              }
+              return updatedMessages;
+            });
+          }
           setIsTyping(false);
-          setActiveStreamController(null); // Clear the controller when streaming is complete
+          activeStreamController.current = null;
         }
       );
 
       // Store the controller so we can abort it if needed
-      setActiveStreamController(controller);
+      activeStreamController.current = controller;
     } catch (error) {
       const errorDetails = handleApiError(error, 'handleRetrySend');
       // Check if a message was created and update it, or create a new error message
@@ -551,6 +520,22 @@ function App() {
     }
   };
 
+  // Clean up any active stream when unmounting or when a new message is being sent
+  useEffect(() => {
+    return () => {
+      if (activeStreamController.current) {
+        console.log('Cleaning up active stream controller');
+        try {
+          activeStreamController.current.abort();
+        } catch (error) {
+          console.error('Error during stream cleanup:', error);
+        } finally {
+          activeStreamController.current = null;
+        }
+      }
+    };
+  }, []);
+
   useEffect(() => {
     chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
 
@@ -580,20 +565,7 @@ function App() {
         chatContainerRef={chatContainerRef}
         isTyping={isTyping}
         handleRetry={handleRetry}
-        handleStopGeneration={handleStopGeneration}
       />
-      {isTyping && (
-        <div className="stop-generation-floating">
-          <button
-            className="stop-button-floating"
-            onClick={() => handleStopGeneration()}
-            aria-label="Stop generation"
-          >
-            <FiSquare />
-            <span>Stop</span>
-          </button>
-        </div>
-      )}
       <ChatInput
         input={input}
         setInput={setInput}

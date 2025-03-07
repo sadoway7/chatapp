@@ -198,6 +198,9 @@ export const sendChatMessageStreaming = async (openWebUIUrl, apiKey, model, mess
   
   const headers = {
     'Content-Type': 'application/json',
+    'Connection': 'close',
+    'Cache-Control': 'no-cache',
+    'X-Accel-Buffering': 'no' // Disable nginx buffering
   };
   if (apiKey) {
     // Ensure the API key is properly formatted with 'Bearer ' prefix
@@ -235,7 +238,11 @@ export const sendChatMessageStreaming = async (openWebUIUrl, apiKey, model, mess
       method: 'POST',
       headers,
       body: JSON.stringify(payload),
-      signal // Add the abort signal
+      signal, // Add the abort signal
+      keepalive: false, // Don't keep connection alive
+      credentials: 'omit', // Don't send credentials
+      mode: 'cors', // Ensure CORS is respected
+      timeout: 60000 // 60 second timeout
     });
 
     console.log('API: Received response with status:', response.status);
@@ -250,21 +257,43 @@ export const sendChatMessageStreaming = async (openWebUIUrl, apiKey, model, mess
     let fullContent = '';
     
     console.log('API: Starting to read streaming response');
+
+    let abortCleanup = false;
+
+    signal.addEventListener('abort', async () => {
+      console.log('API: Stream aborted by user');
+      abortCleanup = true;
+      
+      // Stop everything immediately
+      try {
+        await Promise.all([
+          reader.cancel(),
+          response.body?.cancel(),
+          // Force terminate server-side generation
+          fetch(`${openWebUIUrl}/api/stop`, {
+            method: 'POST',
+            headers,
+            // Use a new abort controller with short timeout
+            signal: AbortSignal.timeout(1000)
+          })
+        ]);
+      } catch (e) {
+        console.error('API: Error during abort cleanup:', e);
+      }
+      
+      onComplete(fullContent);
+    });
+
     try {
+      // Use a wrapper that checks abort status
+      const safeRead = async () => {
+        if (signal.aborted || abortCleanup) return { done: true };
+        return await reader.read();
+      };
+
       while (true) {
-        // Check if the request has been aborted before reading
-        if (signal.aborted) {
-          console.log('API: Stream was aborted by user before read');
-          // Call onComplete with the content so far
-          onComplete(fullContent + " [Generation stopped]");
-          return controller;
-        }
-        
-        const { done, value } = await reader.read();
-        if (done) {
-          console.log('API: Streaming response complete');
-          break;
-        }
+        const { done, value } = await safeRead();
+        if (done || signal.aborted || abortCleanup) break;
         
         const chunk = decoder.decode(value);
         const lines = chunk.split('\n').filter(line => line.trim() !== '');
@@ -297,11 +326,11 @@ export const sendChatMessageStreaming = async (openWebUIUrl, apiKey, model, mess
                 console.log('API: Parsed text content');
               }
               
-              if (content) {
+              // Check abort status before adding content
+              if (content && !signal.aborted && !abortCleanup) {
+                // Only update content if not aborted
                 fullContent += content;
                 onChunk(content);
-              } else {
-                console.log('API: No content found in streaming response chunk:', parsed);
               }
             } catch (e) {
               console.error('API: Error parsing streaming response:', e);
@@ -310,16 +339,31 @@ export const sendChatMessageStreaming = async (openWebUIUrl, apiKey, model, mess
         }
       }
       
-      // Call onComplete with the full content when done
-      console.log('API: Streaming complete, full content length:', fullContent.length);
-      onComplete(fullContent);
+      // Only call onComplete if not aborted
+      if (!signal.aborted) {
+        console.log('API: Streaming complete, full content length:', fullContent.length);
+        onComplete(fullContent);
+      }
     } catch (error) {
-      if (error.name === 'AbortError') {
+      if (signal.aborted) {
         console.log('API: Stream was aborted by user');
-        // Call onComplete with the content so far plus a message
-        onComplete(fullContent + " [Generation stopped]");
+        reader.cancel().catch(() => {});
+        response.body?.cancel();
       } else {
+        console.error('API: Error during streaming:', error);
         throw error;
+      }
+    } finally {
+      // Ensure resources are cleaned up
+      if (signal.aborted) {
+        try {
+          await fetch(`${openWebUIUrl}/api/stop`, {
+            method: 'POST',
+            headers
+          });
+        } catch (e) {
+          // Ignore cleanup errors
+        }
       }
     }
   } catch (error) {

@@ -744,7 +744,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 16px auto 60px; /* Increased bottom margin to avoid being covered by input */
+  margin: 1px auto 60px; /* Increased bottom margin to avoid being covered by input */
   animation: slideIn 0.5s ease forwards;
   opacity: 1; /* Make it visible immediately */
   width: 70px;
