@@ -1,5 +1,5 @@
 {
     "openWebUIUrl": "https://open.sadoway.ca",
-    "apiKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Ijk0ODE3ZWY1LTE2NGYtNGU5ZS04M2VmLTY5MDdhZTViYjdkZiJ9.yh_1x9wXldWOWtKQdDRaHC1vdtwrx5jyfhkamOpd1ms",
-    "selectedModel": "deepseekr138b.deepseek-r1"
+    "apiKey": "sk-e0519f98601c409e8336dbc292bc6c42",
+    "selectedModel": "phi4-mini:latest"
 }

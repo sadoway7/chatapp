@@ -1,5 +1,4 @@
 This file is a merged representation of the entire codebase, combined into a single document by Repomix.
-The content has been processed where content has been compressed (code blocks are separated by ⋮---- delimiter).
 
 ================================================================
 File Summary
@@ -39,7 +38,6 @@ Notes:
 - Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
 - Files matching patterns in .gitignore are excluded
 - Files matching default ignore patterns are excluded
-- Content has been compressed - code blocks are separated by ⋮---- delimiter
 
 Additional Info:
 ----------------
@@ -51,6 +49,7 @@ Directory Structure
 .gitignore
 Dockerfile
 index.html
+model-loading-indicator-plan.md
 package.json
 public/config.json
 public/icon.svg
@@ -63,7 +62,6 @@ src/components/ChatMessages.jsx
 src/components/FileUpload.jsx
 src/components/Header.jsx
 src/components/SettingsModal.jsx
-src/config.json
 src/FILE_MAP.md
 src/index.css
 src/main.jsx
@@ -136,6 +134,181 @@ File: index.html
     </html>
 
 ================
+File: model-loading-indicator-plan.md
+================
+# Model Loading Indicator Implementation Plan
+
+## Overview
+
+The goal is to add a visual indicator in the header that shows when a model is being loaded after switching models. Since the OpenWebUI API doesn't provide a direct way to check if a model is loaded or loading, we'll implement a solution that simulates this behavior.
+
+## Implementation Steps
+
+### 1. Add Model Loading State to App.jsx
+
+```jsx
+// Add a new state variable
+const [isModelLoading, setIsModelLoading] = useState(false);
+const [loadingModel, setLoadingModel] = useState('');
+```
+
+### 2. Update the Header Component
+
+Modify the Header component to accept and display the model loading status:
+
+```jsx
+// Header.jsx
+const Header = ({ handleClearChat, isModelLoading, loadingModel }) => {
+  return (
+    <div className="chat-header">
+      <div className="logo-container">
+        {/* Existing logo SVG */}
+        <h2 className="logo-text">chat<span className="logo-dot">.</span>sadoway</h2>
+      </div>
+      
+      {/* Add model loading indicator */}
+      {isModelLoading && (
+        <div className="model-loading-indicator">
+          <div className="loading-spinner"></div>
+          <span>Loading {loadingModel}...</span>
+        </div>
+      )}
+      
+      <div className="header-buttons">
+        <button className="clear-button" onClick={handleClearChat}>
+          Clear
+        </button>
+      </div>
+    </div>
+  );
+};
+```
+
+### 3. Update Model Selection Logic in ChatInput.jsx
+
+Modify the `selectModel` function to trigger the loading state:
+
+```jsx
+// ChatInput.jsx
+const selectModel = (model) => {
+  // Set the selected model
+  setSelectedModel(model);
+  
+  // Trigger loading state in parent component
+  onModelChange(model);
+  
+  // Close the dropdown
+  setDropdownOpen(false);
+};
+```
+
+Update the component props to include the new callback:
+
+```jsx
+const ChatInput = ({
+  // Existing props
+  onModelChange,
+  // Other props
+}) => {
+  // Component implementation
+};
+```
+
+### 4. Update App.jsx to Handle Model Changes
+
+Add a handler function for model changes:
+
+```jsx
+const handleModelChange = (modelId) => {
+  // Set loading state
+  setIsModelLoading(true);
+  setLoadingModel(modelId);
+  
+  // Store the model ID in localStorage
+  localStorage.setItem('selectedModel', modelId);
+  
+  // Simulate loading time (3-5 seconds)
+  setTimeout(() => {
+    setIsModelLoading(false);
+    setLoadingModel('');
+  }, 3000 + Math.random() * 2000); // Random time between 3-5 seconds
+};
+```
+
+Update the ChatInput component call:
+
+```jsx
+<ChatInput
+  // Existing props
+  onModelChange={handleModelChange}
+  // Other props
+/>
+```
+
+Update the Header component call:
+
+```jsx
+<Header 
+  handleClearChat={handleClearChat} 
+  isModelLoading={isModelLoading}
+  loadingModel={loadingModel}
+/>
+```
+
+### 5. Add CSS Styles for the Loading Indicator
+
+Add the following CSS to index.css:
+
+```css
+/* Model loading indicator */
+.model-loading-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: rgba(255, 152, 0, 0.15);
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 0.9rem;
+  color: #f0f0f0;
+  margin-right: 12px;
+}
+
+.loading-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid #ff9800;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+```
+
+## Additional Considerations
+
+1. **Error Handling**: If the model fails to load, we should display an error message.
+2. **Disable Input**: Consider disabling the chat input while a model is loading.
+3. **Persistence**: The loading state should be reset if the page is refreshed.
+4. **API Integration**: If the OpenWebUI API adds support for checking model loading status in the future, update the implementation to use the actual API.
+
+## Testing
+
+1. Test switching between different models
+2. Test the loading indicator appearance and disappearance
+3. Test the behavior when switching models rapidly
+4. Test the behavior when sending messages while a model is loading
+
+## Future Improvements
+
+1. Add a progress bar or more detailed loading information if the API provides it
+2. Add model-specific information in the header (e.g., parameter count, quantization)
+3. Allow canceling a model load operation
+
+================
 File: package.json
 ================
 {
@@ -149,6 +322,7 @@ File: package.json
     "preview": "vite preview"
   },
   "dependencies": {
+    "marked": "^15.0.7",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-icons": "^4.12.0"
@@ -166,9 +340,9 @@ File: public/config.json
 ================
 {
     "openWebUIUrl": "https://open.sadoway.ca",
-    "apiKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Ijk0ODE3ZWY1LTE2NGYtNGU5ZS04M2VmLTY5MDdhZTViYjdkZiJ9.yh_1x9wXldWOWtKQdDRaHC1vdtwrx5jyfhkamOpd1ms",
+    "apiKey": "sk-e0519f98601c409e8336dbc292bc6c42",
     "selectedModel": "phi4-mini:latest"
-  }
+}
 
 ================
 File: public/icon.svg
@@ -324,445 +498,1605 @@ This is a hobby project maintained in my free time. If you find bugs or have que
 ================
 File: src/api/openwebui.js
 ================
+import { handleApiError } from '../utils/error';
+
 export const uploadFile = async (openWebUIUrl, apiKey, file) => {
-console.log('API: uploadFile called with file:', file.name, file.type, file.size);
-console.log('API: Using URL:', `${openWebUIUrl}/api/v1/files/`);
-⋮----
-console.log('API: Using authorization header');
-⋮----
-console.log('API: Creating FormData and appending file');
-const formData = new FormData();
-formData.append('file', file);
-⋮----
-console.log('API: Sending fetch request');
-const response = await fetch(`${openWebUIUrl}/api/v1/files/`, {
-⋮----
-console.log('API: Received response with status:', response.status);
-⋮----
-const errorText = await response.text();
-console.error('API: Error response body:', errorText);
-throw new Error(`Failed to upload file: ${response.status} ${response.statusText}\n${errorText}`);
-⋮----
-const data = await response.json();
-console.log('API: Successfully parsed response:', data);
-⋮----
-console.error('API: Error in uploadFile:', error);
-handleApiError(error, 'uploadFile');
-⋮----
+  console.log('API: uploadFile called with file:', file.name, file.type, file.size);
+  console.log('API: Using URL:', `${openWebUIUrl}/api/v1/files/`);
+  
+  const headers = {};
+  if (apiKey) {
+    // Ensure the API key is properly formatted with 'Bearer ' prefix
+    headers['Authorization'] = apiKey.startsWith('Bearer ') ? apiKey : `Bearer ${apiKey}`;
+    console.log('API: Using API key starting with:', apiKey.substring(0, 15) + '...');
+  } else {
+    console.warn('API: No API key provided for file upload');
+  }
+
+  try {
+    console.log('API: Creating FormData and appending file');
+    const formData = new FormData();
+    formData.append('file', file);
+
+    console.log('API: Sending fetch request');
+    const response = await fetch(`${openWebUIUrl}/api/v1/files/`, {
+      method: 'POST',
+      headers,
+      body: formData,
+    });
+
+    console.log('API: Received response with status:', response.status);
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('API: Error response body:', errorText);
+      throw new Error(`Failed to upload file: ${response.status} ${response.statusText}\n${errorText}`);
+    }
+
+    const data = await response.json();
+    console.log('API: Successfully parsed response:', data);
+    return data;
+  } catch (error) {
+    console.error('API: Error in uploadFile:', error);
+    handleApiError(error, 'uploadFile');
+    throw error;
+  }
+};
+
 export const fetchModels = async (openWebUIUrl, apiKey) => {
-⋮----
-const response = await fetch(`${openWebUIUrl}/api/models`, { headers });
-⋮----
-throw new Error(`Failed to fetch models: ${response.status} ${response.statusText}\n${errorText}`);
-⋮----
-if (!data || !Array.isArray(data.data)) {
-throw new Error('Invalid response format from OpenWebUI API.');
-⋮----
-handleApiError(error, 'fetchModels');
-⋮----
+  const headers = {
+    'Content-Type': 'application/json',
+  };
+  if (apiKey) {
+    // Ensure the API key is properly formatted with 'Bearer ' prefix
+    headers['Authorization'] = apiKey.startsWith('Bearer ') ? apiKey : `Bearer ${apiKey}`;
+    console.log('API: Using API key starting with:', apiKey.substring(0, 15) + '...');
+  } else {
+    console.warn('API: No API key provided');
+  }
+
+  try {
+    console.log('Fetching models from:', `${openWebUIUrl}/api/models`);
+    const response = await fetch(`${openWebUIUrl}/api/models`, { headers });
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Failed to fetch models: ${response.status} ${response.statusText}\n${errorText}`);
+    }
+    const data = await response.json();
+    console.log('Raw models response:', data);
+    
+    // Handle different response formats from the API
+    let modelsList = [];
+    
+    if (data && Array.isArray(data)) {
+      // Direct array format
+      modelsList = data;
+      console.log('Direct array format detected');
+    } else if (data && Array.isArray(data.data)) {
+      // Object with data array format
+      modelsList = data.data;
+      console.log('Object with data array format detected');
+    } else if (data && typeof data === 'object') {
+      // Object with model properties format
+      // Convert object keys to array of model IDs
+      modelsList = Object.keys(data).map(key => ({
+        id: key,
+        name: key
+      }));
+      console.log('Object with model properties format detected');
+    } else {
+      console.error('Unrecognized model response format:', data);
+      throw new Error('Invalid response format from OpenWebUI API.');
+    }
+    
+    // Log the parsed models data for debugging
+    console.log('Parsed models data:', modelsList);
+    return modelsList;
+  } catch (error) {
+    console.error('Error in fetchModels:', error);
+    handleApiError(error, 'fetchModels');
+    throw error;
+  }
+};
+
 export const sendChatMessage = async (openWebUIUrl, apiKey, model, messages, fileId = null) => {
-console.log('API: sendChatMessage called with model:', model);
-console.log('API: Messages count:', messages.length);
-console.log('API: File ID:', fileId);
-⋮----
-// Add file reference if provided
-⋮----
-console.log('API: Adding file reference to payload:', fileId);
-⋮----
-console.log('API: Sending chat completion request');
-const response = await fetch(`${openWebUIUrl}/api/chat/completions`, {
-⋮----
-body: JSON.stringify(payload),
-⋮----
-throw new Error(`Failed to send message: ${response.status} ${response.statusText}\n${errorText}`);
-⋮----
-console.log('API: Successfully parsed response');
-⋮----
-console.error('API: Error in sendChatMessage:', error);
-handleApiError(error, 'sendChatMessage');
+  // Ensure model is a string (model ID)
+  const modelId = typeof model === 'object' ? model.id : model;
+  console.log('API: sendChatMessage called with model:', modelId);
+  console.log('API: Messages count:', messages.length);
+  console.log('API: File ID:', fileId);
+  
+  const headers = {
+    'Content-Type': 'application/json',
+  };
+  if (apiKey) {
+    // Ensure the API key is properly formatted with 'Bearer ' prefix
+    headers['Authorization'] = apiKey.startsWith('Bearer ') ? apiKey : `Bearer ${apiKey}`;
+    console.log('API: Using API key starting with:', apiKey.substring(0, 15) + '...');
+  } else {
+    console.warn('API: No API key provided for chat message');
+  }
+
+  try {
+    // Format messages to ensure they follow the correct structure
+    // Extract only the role and content from each message
+    const formattedMessages = messages.map(msg => ({
+      role: msg.role,
+      content: msg.content
+    }));
+    
+    const payload = {
+      model: modelId,
+      messages: formattedMessages,
+      stream: false
+    };
+
+    // Add file reference if provided
+    if (fileId) {
+      console.log('API: Adding file reference to payload:', fileId);
+      payload.files = [
+        { type: 'file', id: fileId }
+      ];
+    }
+
+    console.log('API: Sending chat completion request');
+    const response = await fetch(`${openWebUIUrl}/api/chat/completions`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(payload),
+    });
+
+    console.log('API: Received response with status:', response.status);
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('API: Error response body:', errorText);
+      throw new Error(`Failed to send message: ${response.status} ${response.statusText}\n${errorText}`);
+    }
+
+    const data = await response.json();
+    console.log('API: Successfully parsed response:', data);
+    
+    // Extract the assistant message content
+    let content = '';
+    if (data.choices && data.choices[0] && data.choices[0].message) {
+      content = data.choices[0].message.content;
+      console.log('API: Extracted content from choices array');
+    } else if (data.content) {
+      content = data.content;
+      console.log('API: Extracted content directly from response');
+    } else {
+      console.warn('API: Could not extract content from response:', data);
+      // Return the entire data object as fallback
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('API: Error in sendChatMessage:', error);
+    handleApiError(error, 'sendChatMessage');
+    throw error;
+  }
+};
+/**
+ * Send a chat message with streaming response
+ * @param {string} openWebUIUrl - The URL of the OpenWebUI API
+ * @param {string} apiKey - The API key for authentication
+ * @param {string} model - The model to use for the chat
+ * @param {Array} messages - The messages to send
+ * @param {string|null} fileId - The ID of the file to include in the message
+ * @param {Function} onChunk - Callback function to handle each chunk of the response
+ * @param {Function} onComplete - Callback function to handle the complete response
+ * @returns {AbortController} - Controller that can be used to abort the stream
+ */
+export const sendChatMessageStreaming = async (openWebUIUrl, apiKey, model, messages, fileId = null, onChunk, onComplete) => {
+  // Create an AbortController to allow canceling the stream
+  const controller = new AbortController();
+  const signal = controller.signal;
+  // Ensure model is a string (model ID)
+  const modelId = typeof model === 'object' ? model.id : model;
+  console.log('API: sendChatMessageStreaming called with model:', modelId);
+  console.log('API: Messages count:', messages.length);
+  console.log('API: File ID:', fileId);
+  
+  const headers = {
+    'Content-Type': 'application/json',
+  };
+  if (apiKey) {
+    // Ensure the API key is properly formatted with 'Bearer ' prefix
+    headers['Authorization'] = apiKey.startsWith('Bearer ') ? apiKey : `Bearer ${apiKey}`;
+    console.log('API: Using API key starting with:', apiKey.substring(0, 15) + '...');
+  } else {
+    console.warn('API: No API key provided for streaming chat message');
+  }
+
+  try {
+    // Format messages to extract only role and content, removing any additional metadata
+    const formattedMessages = messages.map(msg => ({
+      role: msg.role,
+      content: msg.content
+    }));
+    
+    const payload = {
+      model: modelId,
+      messages: formattedMessages,
+      stream: true // Enable streaming
+    };
+    
+    console.log('API: Streaming request payload:', JSON.stringify(payload));
+
+    // Add file reference if provided
+    if (fileId) {
+      console.log('API: Adding file reference to payload:', fileId);
+      payload.files = [
+        { type: 'file', id: fileId }
+      ];
+    }
+
+    console.log('API: Sending streaming chat completion request');
+    const response = await fetch(`${openWebUIUrl}/api/chat/completions`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(payload),
+      signal // Add the abort signal
+    });
+
+    console.log('API: Received response with status:', response.status);
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('API: Error response body:', errorText);
+      throw new Error(`Failed to send message: ${response.status} ${response.statusText}\n${errorText}`);
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let fullContent = '';
+    
+    console.log('API: Starting to read streaming response');
+    try {
+      while (true) {
+        // Check if the request has been aborted before reading
+        if (signal.aborted) {
+          console.log('API: Stream was aborted by user before read');
+          // Call onComplete with the content so far
+          onComplete(fullContent + " [Generation stopped]");
+          return controller;
+        }
+        
+        const { done, value } = await reader.read();
+        if (done) {
+          console.log('API: Streaming response complete');
+          break;
+        }
+        
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n').filter(line => line.trim() !== '');
+        
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.substring(6);
+            if (data === '[DONE]') continue;
+            
+            try {
+              const parsed = JSON.parse(data);
+              let content = null;
+              
+              // Handle different streaming response formats
+              if (parsed.choices && parsed.choices[0].delta && parsed.choices[0].delta.content) {
+                // OpenAI-compatible format
+                content = parsed.choices[0].delta.content;
+                console.log('API: Parsed OpenAI-compatible delta content');
+              } else if (parsed.choices && parsed.choices[0].message && parsed.choices[0].message.content) {
+                // Some APIs might send complete message chunks
+                content = parsed.choices[0].message.content;
+                console.log('API: Parsed complete message content chunk');
+              } else if (parsed.content) {
+                // Simpler format with direct content
+                content = parsed.content;
+                console.log('API: Parsed direct content');
+              } else if (parsed.text) {
+                // Another common format
+                content = parsed.text;
+                console.log('API: Parsed text content');
+              }
+              
+              if (content) {
+                fullContent += content;
+                onChunk(content);
+              } else {
+                console.log('API: No content found in streaming response chunk:', parsed);
+              }
+            } catch (e) {
+              console.error('API: Error parsing streaming response:', e);
+            }
+          }
+        }
+      }
+      
+      // Call onComplete with the full content when done
+      console.log('API: Streaming complete, full content length:', fullContent.length);
+      onComplete(fullContent);
+    } catch (error) {
+      if (error.name === 'AbortError') {
+        console.log('API: Stream was aborted by user');
+        // Call onComplete with the content so far plus a message
+        onComplete(fullContent + " [Generation stopped]");
+      } else {
+        throw error;
+      }
+    }
+  } catch (error) {
+    console.error('API: Error in sendChatMessageStreaming:', error);
+    handleApiError(error, 'sendChatMessageStreaming');
+    throw error;
+  }
+  
+  // Return the controller so it can be used to abort the stream
+  return controller;
+};
 
 ================
 File: src/App.jsx
 ================
+import React, { useState, useEffect, useRef } from 'react';
+import { FiSquare } from 'react-icons/fi';
+import Header from './components/Header';
+import ChatInput from './components/ChatInput';
+import ChatMessages from './components/ChatMessages';
+import SettingsModal from './components/SettingsModal';
+import { fetchModels, sendChatMessage, sendChatMessageStreaming, uploadFile } from './api/openwebui';
+import { handleCommand } from './commands';
+import { handleApiError } from './utils/error';
+import { loadConfig } from './utils/config';
+import './index.css';
+
 function App() {
-const [messages, setMessages] = useState([]);
-const [input, setInput] = useState('');
-const [showSettings, setShowSettings] = useState(false);
-const [openWebUIUrl, setOpenWebUIUrl] = useState(localStorage.getItem('openWebUIUrl') || config.openWebUIUrl);
-const [apiKey, setApiKey] = useState(localStorage.getItem('apiKey') || config.apiKey);
-const [models, setModels] = useState([]);
-const [selectedModel, setSelectedModel] = useState(localStorage.getItem('selectedModel') || config.selectedModel);
-const [fetchError, setFetchError] = useState(null);
-const [isTyping, setIsTyping] = useState(false);
-const [uploadedFile, setUploadedFile] = useState(null);
-const [fileId, setFileId] = useState(null);
-const [isUploading, setIsUploading] = useState(false);
-const [fileError, setFileError] = useState(null);
-const chatContainerRef = useRef(null);
-⋮----
-useEffect(() => {
-const storedOpenWebUIUrl = localStorage.getItem('openWebUIUrl');
-const storedApiKey = localStorage.getItem('apiKey');
-const storedSelectedModel = localStorage.getItem('selectedModel');
-⋮----
-setOpenWebUIUrl(storedOpenWebUIUrl);
-⋮----
-localStorage.setItem('openWebUIUrl', config.openWebUIUrl);
-⋮----
-setApiKey(storedApiKey);
-⋮----
-localStorage.setItem('apiKey', config.apiKey);
-⋮----
-setSelectedModel(storedSelectedModel);
-⋮----
-localStorage.setItem('selectedModel', config.selectedModel);
-⋮----
-const initialize = async () => {
-⋮----
-const fetchedModels = await fetchModels(openWebUIUrl, apiKey);
-setModels(fetchedModels.map(model => model.id));
-⋮----
-handleApiError(error, 'Initialization');
-setFetchError(error.message);
-⋮----
-initialize();
-⋮----
-const handleFileUpload = async (file) => {
-console.log('App: handleFileUpload called with file:', file.name, file.type, file.size);
-setUploadedFile(file);
-setIsUploading(true);
-setFileError(null); // Clear any previous errors
-⋮----
-console.log('App: Uploading file to API...');
-const response = await uploadFile(openWebUIUrl, apiKey, file);
-console.log('App: File uploaded successfully:', response);
-setFileId(response.id);
-⋮----
-console.error('App: Error uploading file:', error);
-setFileError('Failed to upload file. Please try again.');
-setUploadedFile(null);
-⋮----
-console.log('App: Upload process completed');
-setIsUploading(false);
-⋮----
-const handleFileRemove = () => {
-console.log('App: Removing file');
-⋮----
-setFileId(null);
-setFileError(null);
-⋮----
-const handleFileError = (errorMessage) => {
-console.log('App: File error:', errorMessage);
-setFileError(errorMessage);
-⋮----
-const handleSend = async () => {
-if (!input.trim()) return;
-⋮----
-if (input.startsWith('>')) {
-const command = input.substring(1).trim();
-handleCommand(command, setInput, setShowSettings);
-⋮----
-isOriginalUserMessage: true, // Add metadata to identify original user messages
-hasAttachment: !!fileId, // Add flag to indicate if message has a file attachment
-attachmentName: uploadedFile ? uploadedFile.name : null // Add the file name for display
-⋮----
-setMessages(prevMessages => [...prevMessages, userMessage]);
-setInput('');
-setIsTyping(true);
-⋮----
-// Clear the file immediately after sending
-const tempFileId = fileId; // Store fileId temporarily for the API call
-⋮----
-const response = await sendChatMessage(
-⋮----
-tempFileId // Pass the temporary file ID if available
-⋮----
-throw new Error('Invalid response format from API.');
-⋮----
-setMessages(prevMessages => [...prevMessages, assistantMessage]);
-⋮----
-handleApiError(error, 'handleSendMessage');
-⋮----
-setMessages(prevMessages => [...prevMessages, errorAssistantMessage]);
-⋮----
-setIsTyping(false);
-⋮----
-const handleSettingsChange = (e) => {
-⋮----
-setOpenWebUIUrl(value);
-⋮----
-setApiKey(value);
-⋮----
-setSelectedModel(value);
-⋮----
-const handleSaveSettings = async (e) => {
-e.preventDefault();
-localStorage.setItem('openWebUIUrl', openWebUIUrl);
-localStorage.setItem('apiKey', apiKey);
-localStorage.setItem('selectedModel', selectedModel);
-setShowSettings(false);
-⋮----
-setFetchError(null);
-⋮----
-handleApiError(error, 'handleSaveSettings');
-⋮----
-const handleLoadDefaultSettings = () => {
-setOpenWebUIUrl(config.openWebUIUrl);
-setApiKey(config.apiKey);
-setSelectedModel(config.selectedModel);
-⋮----
-const handleClearChat = () => {
-setMessages([]);
-⋮----
-const handleRetrySend = async (retryMessage, originalUserMessageIndex) => {
-⋮----
-// Get message history up to the retry point
-const messageHistory = messages.slice(0, -1); // Remove last assistant message
-⋮----
-// Add our retry prompt with metadata
-⋮----
-// Log for debugging
-console.log('Sending retry with original message index:', originalUserMessageIndex);
-⋮----
-const response = await sendChatMessage(openWebUIUrl, apiKey, selectedModel, messagesWithRetry);
-⋮----
-isResponseToRetry: messagesWithRetry.some(msg => msg.isRetryPrompt)
-⋮----
-const handleRetry = (index) => {
-console.log('Retry clicked for message at index:', index);
-⋮----
-// Find the original user message this assistant is responding to
-⋮----
-// Check if the previous message is a retry prompt
-⋮----
-// If it's a retry prompt, use its originalUserMessageIndex
-⋮----
-console.log('Found original message via retry prompt metadata:', originalUserMessageIndex);
-⋮----
-// If we couldn't find the original message via metadata, search for it
-⋮----
-console.log('Found original message by searching:', originalUserMessageIndex);
-⋮----
-// If we still couldn't find an original user message, use the most recent user message
-⋮----
-console.log('Falling back to most recent user message:', originalUserMessageIndex);
-⋮----
-console.log('Creating retry prompt for original message:', originalUserMessage);
-⋮----
-handleRetrySend(retryMessage, originalUserMessageIndex);
-⋮----
-console.error('Could not find original user message to retry');
-⋮----
-const handleResize = () => {
-⋮----
-handleResize(); // Set initial height
-⋮----
-window.addEventListener('resize', handleResize);
-⋮----
-window.removeEventListener('resize', handleResize);
+  const [config, setConfig] = useState({
+    openWebUIUrl: "https://open.sadoway.ca",
+    apiKey: "sk-e0519f98601c409e8336dbc292bc6c42",
+    selectedModel: "deepseekr138b.deepseek-r1"
+  });
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState('');
+  const [showSettings, setShowSettings] = useState(false);
+  const [openWebUIUrl, setOpenWebUIUrl] = useState(localStorage.getItem('openWebUIUrl') || config.openWebUIUrl);
+  const [apiKey, setApiKey] = useState(localStorage.getItem('apiKey') || config.apiKey);
+  const [models, setModels] = useState([]);
+  const [selectedModel, setSelectedModel] = useState(localStorage.getItem('selectedModel') || config.selectedModel);
+  const [fetchError, setFetchError] = useState(null);
+  const [isTyping, setIsTyping] = useState(false);
+  const [activeStreamController, setActiveStreamController] = useState(null);
+  const [uploadedFile, setUploadedFile] = useState(null);
+  const [fileId, setFileId] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [fileError, setFileError] = useState(null);
+  const [isModelLoading, setIsModelLoading] = useState(false);
+  const [loadingModel, setLoadingModel] = useState('');
+  const chatContainerRef = useRef(null);
+
+  // Load config.json at runtime using the loadConfig utility
+  useEffect(() => {
+    const initializeConfig = async () => {
+      try {
+        const loadedConfig = await loadConfig();
+        console.log('Loaded config using loadConfig utility:', loadedConfig);
+        setConfig(loadedConfig);
+      } catch (error) {
+        console.error('Error loading config:', error);
+      }
+    };
+    
+    initializeConfig();
+  }, []);
+
+  // Update state variables when config is loaded
+  useEffect(() => {
+    console.log('Config updated, applying to state variables:', config);
+    
+    // Handle openWebUIUrl
+    if (!localStorage.getItem('openWebUIUrl') && config.openWebUIUrl) {
+      setOpenWebUIUrl(config.openWebUIUrl);
+      localStorage.setItem('openWebUIUrl', config.openWebUIUrl);
+      console.log('Set openWebUIUrl from config:', config.openWebUIUrl);
+    }
+    
+    // Handle apiKey
+    if (!localStorage.getItem('apiKey') && config.apiKey) {
+      setApiKey(config.apiKey);
+      localStorage.setItem('apiKey', config.apiKey);
+      console.log('Set apiKey from config');
+    }
+    
+    // Handle selectedModel
+    if (!localStorage.getItem('selectedModel') && config.selectedModel) {
+      setSelectedModel(config.selectedModel);
+      localStorage.setItem('selectedModel', config.selectedModel);
+      console.log('Set selectedModel from config:', config.selectedModel);
+    }
+  }, [config]);
+
+  // This useEffect is no longer needed as we're handling this in the config loading useEffect
+  // useEffect(() => {
+  //   const storedOpenWebUIUrl = localStorage.getItem('openWebUIUrl');
+  //   const storedApiKey = localStorage.getItem('apiKey');
+  //   const storedSelectedModel = localStorage.getItem('selectedModel');
+
+  //   if (storedOpenWebUIUrl) {
+  //     setOpenWebUIUrl(storedOpenWebUIUrl);
+  //   } else {
+  //     localStorage.setItem('openWebUIUrl', config.openWebUIUrl);
+  //   }
+
+  //   if (storedApiKey) {
+  //     setApiKey(storedApiKey);
+  //   } else {
+  //     localStorage.setItem('apiKey', config.apiKey);
+  //   }
+
+  //   if (storedSelectedModel) {
+  //     setSelectedModel(storedSelectedModel);
+  //   } else {
+  //     localStorage.setItem('selectedModel', config.selectedModel);
+  //   }
+  // }, []);
+
+  useEffect(() => {
+    const initialize = async () => {
+      if (openWebUIUrl && apiKey) {
+        try {
+          const fetchedModels = await fetchModels(openWebUIUrl, apiKey);
+          
+          // Store models - handle both object and string formats
+          if (Array.isArray(fetchedModels) && fetchedModels.length > 0) {
+            setModels(fetchedModels);
+            console.log('Fetched models:', fetchedModels);
+            
+            // If no model is selected yet, select the first one
+            if (!selectedModel) {
+              const firstModelId = typeof fetchedModels[0] === 'object' && fetchedModels[0].id
+                ? fetchedModels[0].id
+                : fetchedModels[0];
+              setSelectedModel(firstModelId);
+              localStorage.setItem('selectedModel', firstModelId);
+              console.log('Auto-selected first model:', firstModelId);
+            }
+          } else {
+            // If we couldn't load any models, set some defaults
+            const defaultModels = [
+              "deepseekr138b.deepseek-r1",
+              "phi4-mini:latest",
+              "phi2:latest",
+              "llama2:latest"
+            ];
+            setModels(defaultModels);
+            console.log('Using default models:', defaultModels);
+          }
+        } catch (error) {
+          // If we get an error, set some default models
+          const defaultModels = [
+            "deepseekr138b.deepseek-r1",
+            "phi4-mini:latest",
+            "phi2:latest",
+            "llama2:latest"
+          ];
+          setModels(defaultModels);
+          console.log('Error fetching models, using defaults:', defaultModels);
+          
+          const errorDetails = handleApiError(error, 'Initialization');
+          const errorMessage = errorDetails.statusCode === 401 ?
+            'Could not load models: Authentication failed. Please check your API key in settings.' :
+            `Could not load models: ${errorDetails.message}`;
+          setFetchError(errorMessage);
+        }
+      }
+    };
+
+    initialize();
+  }, [openWebUIUrl, apiKey]);
+
+  const handleFileUpload = async (file) => {
+    console.log('App: handleFileUpload called with file:', file.name, file.type, file.size);
+    setUploadedFile(file);
+    setIsUploading(true);
+    setFileError(null); // Clear any previous errors
+    
+    try {
+      console.log('App: Uploading file to API...');
+      const response = await uploadFile(openWebUIUrl, apiKey, file);
+      console.log('App: File uploaded successfully:', response);
+      setFileId(response.id);
+    } catch (error) {
+      const errorDetails = handleApiError(error, 'handleFileUpload');
+      const errorMessage = errorDetails.statusCode === 401 ?
+        'Authentication failed. Please check your API key in settings.' :
+        `Failed to upload file: ${errorDetails.message}`;
+      setFileError(errorMessage);
+      setUploadedFile(null);
+      setFetchError(errorDetails.message);
+    } finally {
+      console.log('App: Upload process completed');
+      setIsUploading(false);
+    }
+  };
+
+  const handleFileRemove = () => {
+    console.log('App: Removing file');
+    setUploadedFile(null);
+    setFileId(null);
+    setFileError(null);
+  };
+
+  const handleFileError = (errorMessage) => {
+    console.log('App: File error:', errorMessage);
+    setFileError(errorMessage);
+  };
+
+  const handleSend = async () => {
+    if (!input.trim()) return;
+
+    if (input.startsWith('>')) {
+      const command = input.substring(1).trim();
+      handleCommand(command, setInput, setShowSettings);
+      return;
+    }
+
+    const userMessage = {
+      role: 'user',
+      content: input,
+      isOriginalUserMessage: true, // Add metadata to identify original user messages
+      hasAttachment: !!fileId, // Add flag to indicate if message has a file attachment
+      attachmentName: uploadedFile ? uploadedFile.name : null // Add the file name for display
+    };
+    setMessages(prevMessages => [...prevMessages, userMessage]);
+    setInput('');
+    
+    // Clear the file immediately after sending
+    const tempFileId = fileId; // Store fileId temporarily for the API call
+    setUploadedFile(null);
+    setFileId(null);
+
+    // Create an initial assistant message ID for tracking
+    const assistantMessageId = Date.now();
+    
+    // Set typing indicator but don't add the message yet
+    setIsTyping(true);
+
+    try {
+      // Use streaming API and store the controller
+      const controller = await sendChatMessageStreaming(
+        openWebUIUrl,
+        apiKey,
+        selectedModel,
+        [...messages, userMessage],
+        tempFileId,
+        // onChunk callback - add the message if it doesn't exist yet, or update it
+        (chunk) => {
+          setMessages(prevMessages => {
+            const updatedMessages = [...prevMessages];
+            const assistantMessageIndex = updatedMessages.findIndex(msg => msg.id === assistantMessageId);
+            
+            if (assistantMessageIndex !== -1) {
+              // Message exists, update it
+              updatedMessages[assistantMessageIndex] = {
+                ...updatedMessages[assistantMessageIndex],
+                content: updatedMessages[assistantMessageIndex].content + chunk
+              };
+            } else {
+              // Message doesn't exist yet, add it
+              updatedMessages.push({
+                id: assistantMessageId,
+                role: 'assistant',
+                content: chunk.trim(),
+                isResponseToRetry: false,
+                isStreaming: true
+              });
+            }
+            
+            return updatedMessages;
+          });
+        },
+        // onComplete callback - mark streaming as complete
+        (fullContent) => {
+          setMessages(prevMessages => {
+            const updatedMessages = [...prevMessages];
+            const assistantMessageIndex = updatedMessages.findIndex(msg => msg.id === assistantMessageId);
+            if (assistantMessageIndex !== -1) {
+              updatedMessages[assistantMessageIndex] = {
+                ...updatedMessages[assistantMessageIndex],
+                content: fullContent.trim(),
+                isStreaming: false
+              };
+            }
+            return updatedMessages;
+          });
+          setIsTyping(false);
+          setActiveStreamController(null); // Clear the controller when streaming is complete
+        }
+      );
+      
+      // Store the controller so we can abort it if needed
+      setActiveStreamController(controller);
+    } catch (error) {
+      const errorDetails = handleApiError(error, 'handleSendMessage');
+      // Check if a message was created and update it, or create a new error message
+      setMessages(prevMessages => {
+        const updatedMessages = [...prevMessages];
+        const assistantMessageIndex = updatedMessages.findIndex(msg => msg.id === assistantMessageId);
+        
+        const errorContent = `Error: ${errorDetails.message}${errorDetails.statusCode ? ` (Status: ${errorDetails.statusCode})` : ''}`;
+        
+        if (assistantMessageIndex !== -1) {
+          // Update existing message with error
+          updatedMessages[assistantMessageIndex] = {
+            ...updatedMessages[assistantMessageIndex],
+            content: errorContent,
+            isStreaming: false,
+            isError: true
+          };
+        } else {
+          // Create new error message
+          updatedMessages.push({
+            id: assistantMessageId,
+            role: 'assistant',
+            content: errorContent,
+            isResponseToRetry: false,
+            isStreaming: false,
+            isError: true
+          });
+        }
+        
+        // Set fetch error state for potential UI display
+        setFetchError(errorDetails.message);
+        
+        return updatedMessages;
+      });
+      setIsTyping(false);
+      setActiveStreamController(null); // Clear the controller on error
+    }
+  };
+
+  const handleSettingsChange = (e) => {
+    const { name, value } = e.target;
+    if (name === 'openWebUIUrl') {
+      setOpenWebUIUrl(value);
+    } else if (name === 'apiKey') {
+      setApiKey(value);
+    } else if (name === 'selectedModel') {
+      setSelectedModel(value);
+    }
+  };
+  
+  const handleModelChange = (modelId) => {
+    // Set loading state
+    setIsModelLoading(true);
+    setLoadingModel(modelId);
+    
+    // Store the model ID in localStorage
+    localStorage.setItem('selectedModel', modelId);
+    setSelectedModel(modelId);
+    
+    // Simulate loading time (3-5 seconds)
+    setTimeout(() => {
+      setIsModelLoading(false);
+      setLoadingModel('');
+    }, 3000 + Math.random() * 2000); // Random time between 3-5 seconds
+  };
+
+  const handleSaveSettings = async (e) => {
+    e.preventDefault();
+    localStorage.setItem('openWebUIUrl', openWebUIUrl);
+    localStorage.setItem('apiKey', apiKey);
+    localStorage.setItem('selectedModel', selectedModel);
+    setShowSettings(false);
+
+    try {
+      const fetchedModels = await fetchModels(openWebUIUrl, apiKey);
+      // Store full model objects instead of just IDs
+      setModels(fetchedModels);
+      setFetchError(null);
+    } catch (error) {
+      const errorDetails = handleApiError(error, 'handleSaveSettings');
+      const errorMessage = errorDetails.statusCode === 401 ?
+        'Failed to save settings: Authentication failed. Please verify your API key.' :
+        `Failed to save settings: ${errorDetails.message}`;
+      setFetchError(errorMessage);
+    }
+  };
+
+  const handleLoadDefaultSettings = () => {
+    // Use the dynamically loaded config with fallbacks
+    setOpenWebUIUrl(config.openWebUIUrl || "https://open.sadoway.ca");
+    setApiKey(config.apiKey || "");
+    setSelectedModel(config.selectedModel || "phi4-mini:latest");
+    console.log('Loaded default settings from config:', config);
+  };
+
+  const handleClearChat = () => {
+    setMessages([]);
+  };
+
+  const handleStopGeneration = (messageId) => {
+    console.log('Stopping generation for message:', messageId);
+    
+    // If there's an active stream controller, abort it
+    if (activeStreamController) {
+      activeStreamController.abort();
+      setActiveStreamController(null);
+    }
+    
+    // Update the message to remove streaming state
+    setMessages(prevMessages => {
+      const updatedMessages = [...prevMessages];
+      
+      // Find the streaming message
+      let messageIndex = -1;
+      
+      if (messageId) {
+        // If messageId is provided, find that specific message
+        messageIndex = updatedMessages.findIndex(msg => msg.id === messageId);
+      } else {
+        // Otherwise find any streaming message
+        messageIndex = updatedMessages.findIndex(msg => msg.isStreaming);
+      }
+      
+      if (messageIndex !== -1) {
+        updatedMessages[messageIndex] = {
+          ...updatedMessages[messageIndex],
+          isStreaming: false,
+          content: updatedMessages[messageIndex].content + " [Generation stopped]"
+        };
+      } else {
+        // If no streaming message found but we're in typing state,
+        // add a new message indicating generation was stopped
+        const lastUserMessageIndex = updatedMessages.findLastIndex(msg => msg.role === 'user');
+        if (lastUserMessageIndex !== -1) {
+          updatedMessages.push({
+            id: Date.now(),
+            role: 'assistant',
+            content: "[Generation stopped before completion]",
+            isStreaming: false
+          });
+        }
+      }
+      
+      return updatedMessages;
+    });
+    
+    setIsTyping(false);
+  };
+  const handleRetrySend = async (retryMessage, originalUserMessageIndex) => {
+    setIsTyping(true);
+    try {
+      // Get message history up to the retry point
+      const messageHistory = messages.slice(0, -1); // Remove last assistant message
+      
+      // Add our retry prompt with metadata
+      const messagesWithRetry = [...messageHistory, {
+        role: 'user',
+        content: retryMessage,
+        isRetryPrompt: true,
+        originalUserMessageIndex: originalUserMessageIndex
+      }];
+      
+      // Log for debugging
+      console.log('Sending retry with original message index:', originalUserMessageIndex);
+      
+      // Create an initial assistant message ID for tracking
+      const assistantMessageId = Date.now();
+      
+      // Use streaming API for retry and store the controller
+      const controller = await sendChatMessageStreaming(
+        openWebUIUrl,
+        apiKey,
+        selectedModel,
+        messagesWithRetry,
+        null, // No file ID for retry
+        // onChunk callback - add the message if it doesn't exist yet, or update it
+        (chunk) => {
+          setMessages(prevMessages => {
+            const updatedMessages = [...prevMessages];
+            const assistantMessageIndex = updatedMessages.findIndex(msg => msg.id === assistantMessageId);
+            
+            if (assistantMessageIndex !== -1) {
+              // Message exists, update it
+              updatedMessages[assistantMessageIndex] = {
+                ...updatedMessages[assistantMessageIndex],
+                content: updatedMessages[assistantMessageIndex].content + chunk
+              };
+            } else {
+              // Message doesn't exist yet, add it
+              updatedMessages.push({
+                id: assistantMessageId,
+                role: 'assistant',
+                content: chunk.trim(),
+                isResponseToRetry: true,
+                isStreaming: true
+              });
+            }
+            
+            return updatedMessages;
+          });
+        },
+        // onComplete callback - mark streaming as complete
+        (fullContent) => {
+          setMessages(prevMessages => {
+            const updatedMessages = [...prevMessages];
+            const assistantMessageIndex = updatedMessages.findIndex(msg => msg.id === assistantMessageId);
+            if (assistantMessageIndex !== -1) {
+              updatedMessages[assistantMessageIndex] = {
+                ...updatedMessages[assistantMessageIndex],
+                content: fullContent.trim(),
+                isStreaming: false
+              };
+            }
+            return updatedMessages;
+          });
+          setIsTyping(false);
+          setActiveStreamController(null); // Clear the controller when streaming is complete
+        }
+      );
+      
+      // Store the controller so we can abort it if needed
+      setActiveStreamController(controller);
+    } catch (error) {
+      const errorDetails = handleApiError(error, 'handleRetrySend');
+      // Check if a message was created and update it, or create a new error message
+      setMessages(prevMessages => {
+        const updatedMessages = [...prevMessages];
+        const assistantMessageIndex = updatedMessages.findIndex(msg => msg.id === assistantMessageId);
+        
+        const errorContent = `Error: ${errorDetails.message}${errorDetails.statusCode ? ` (Status: ${errorDetails.statusCode})` : ''}`;
+        
+        if (assistantMessageIndex !== -1) {
+          // Update existing message with error
+          updatedMessages[assistantMessageIndex] = {
+            ...updatedMessages[assistantMessageIndex],
+            content: errorContent,
+            isStreaming: false,
+            isError: true
+          };
+        } else {
+          // Create new error message
+          updatedMessages.push({
+            id: assistantMessageId,
+            role: 'assistant',
+            content: errorContent,
+            isResponseToRetry: true,
+            isStreaming: false,
+            isError: true
+          });
+        }
+        
+        // Set fetch error state for potential UI display
+        setFetchError(errorDetails.message);
+        
+        return updatedMessages;
+      });
+      setIsTyping(false);
+      setActiveStreamController(null); // Clear the controller on error
+    }
+  };
+
+  const handleRetry = (index) => {
+    console.log('Retry clicked for message at index:', index);
+    
+    // Find the original user message this assistant is responding to
+    let originalUserMessageIndex = -1;
+    let originalUserMessage = '';
+    
+    // Check if the previous message is a retry prompt
+    if (index > 0 && messages[index-1].role === 'user' && messages[index-1].isRetryPrompt) {
+      // If it's a retry prompt, use its originalUserMessageIndex
+      originalUserMessageIndex = messages[index-1].originalUserMessageIndex;
+      if (originalUserMessageIndex !== undefined && messages[originalUserMessageIndex]) {
+        originalUserMessage = messages[originalUserMessageIndex].content;
+        console.log('Found original message via retry prompt metadata:', originalUserMessageIndex);
+      }
+    }
+    
+    // If we couldn't find the original message via metadata, search for it
+    if (originalUserMessageIndex === -1 || !originalUserMessage) {
+      let userMessageIndex = index - 1;
+      while (userMessageIndex >= 0) {
+        if (messages[userMessageIndex].role === 'user' && messages[userMessageIndex].isOriginalUserMessage) {
+          originalUserMessage = messages[userMessageIndex].content;
+          originalUserMessageIndex = userMessageIndex;
+          console.log('Found original message by searching:', originalUserMessageIndex);
+          break;
+        }
+        userMessageIndex--;
+      }
+    }
+    
+    // If we still couldn't find an original user message, use the most recent user message
+    if (originalUserMessageIndex === -1 || !originalUserMessage) {
+      let userMessageIndex = index - 1;
+      while (userMessageIndex >= 0) {
+        if (messages[userMessageIndex].role === 'user') {
+          originalUserMessage = messages[userMessageIndex].content;
+          originalUserMessageIndex = userMessageIndex;
+          console.log('Falling back to most recent user message:', originalUserMessageIndex);
+          break;
+        }
+        userMessageIndex--;
+      }
+    }
+    
+    if (originalUserMessageIndex >= 0 && originalUserMessage) {
+      console.log('Creating retry prompt for original message:', originalUserMessage);
+      
+      const retryMessage = `Acknowledge that your previous response wasn't satisfactory and provide a new, different response to the user's question. Take a different approach this time by:
+  1. Using a different perspective or methodology
+  2. Providing more specific examples or details
+  3. Breaking down the explanation in a clearer way
+  4. Being more direct and concise
+  5. you may get this message again, you need to have a different response each time
+  
+  Important: Do not repeat content from your previous response. Focus on giving a fresh, alternative answer that might better address what the user is looking for.
+  
+  Original user message: ${originalUserMessage}`;
+      
+      handleRetrySend(retryMessage, originalUserMessageIndex);
+    } else {
+      console.error('Could not find original user message to retry');
+    }
+  };
+
+  useEffect(() => {
+    chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    
+    const handleResize = () => {
+      document.body.style.height = `${window.innerHeight}px`;
+    };
+
+    handleResize(); // Set initial height
+    
+    window.addEventListener('resize', handleResize);
+    
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [messages]);
+
+  return (
+    <div className="container">
+      <Header
+        handleClearChat={handleClearChat}
+        isModelLoading={isModelLoading}
+        loadingModel={loadingModel}
+      />
+      {fetchError && <div className="error-message">{fetchError}</div>}
+      <ChatMessages
+        messages={messages}
+        chatContainerRef={chatContainerRef}
+        isTyping={isTyping}
+        handleRetry={handleRetry}
+        handleStopGeneration={handleStopGeneration}
+      />
+      {isTyping && (
+        <div className="stop-generation-floating">
+          <button
+            className="stop-button-floating"
+            onClick={() => handleStopGeneration()}
+            aria-label="Stop generation"
+          >
+            <FiSquare />
+            <span>Stop</span>
+          </button>
+        </div>
+      )}
+      <ChatInput
+        input={input}
+        setInput={setInput}
+        handleSend={handleSend}
+        models={models}
+        selectedModel={selectedModel}
+        setSelectedModel={setSelectedModel}
+        uploadedFile={uploadedFile}
+        onFileUpload={handleFileUpload}
+        onFileRemove={handleFileRemove}
+        onFileError={handleFileError}
+        fileError={fileError}
+        isUploading={isUploading}
+        onModelChange={handleModelChange}
+        isModelLoading={isModelLoading}
+      />
+      {showSettings && (
+        <div className="settings-modal">
+          <SettingsModal
+            showSettings={showSettings}
+            setShowSettings={setShowSettings}
+            openWebUIUrl={openWebUIUrl}
+            setOpenWebUIUrl={setOpenWebUIUrl}
+            apiKey={apiKey}
+            setApiKey={setApiKey}
+            selectedModel={selectedModel}
+            setSelectedModel={setSelectedModel}
+            models={models}
+            handleSaveSettings={handleSaveSettings}
+            handleLoadDefaultSettings={handleLoadDefaultSettings}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default App;
 
 ================
 File: src/commands.js
 ================
 export const handleCommand = (command, setInput, setShowSettings) => {
-⋮----
-setShowSettings(true);
-⋮----
-// Add more commands here if needed
-⋮----
-console.log(`Unknown command: ${command}`);
-⋮----
-setInput(''); // Clear the input field after handling a command
+  switch (command) {
+    case 'settings':
+      setShowSettings(true);
+      break;
+    // Add more commands here if needed
+    default:
+      console.log(`Unknown command: ${command}`);
+  }
+  setInput(''); // Clear the input field after handling a command
+};
 
 ================
 File: src/components/ChatInput.jsx
 ================
+import React, { useRef, useEffect, useState } from 'react';
+import { FiSend, FiChevronDown, FiChevronUp } from 'react-icons/fi';
+import FileUpload from './FileUpload';
+
 const ChatInput = ({
-⋮----
-const textareaRef = useRef(null);
-const [dropdownOpen, setDropdownOpen] = useState(false);
-const dropdownRef = useRef(null);
-⋮----
-// Auto-resize the textarea based on content
-useEffect(() => {
-⋮----
-// Reset height to auto to get the correct scrollHeight
-⋮----
-// Calculate new height (capped at 4 lines)
-const lineHeight = 24; // Approximate line height in pixels
-const maxHeight = lineHeight * 4; // Max height for 4 lines
-⋮----
-// Set the height to either the scrollHeight or maxHeight, whichever is smaller
-textareaRef.current.style.height = `${Math.min(scrollHeight, maxHeight)}px`;
-⋮----
-// Close dropdown when clicking outside
-⋮----
-const handleClickOutside = (event) => {
-if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-setDropdownOpen(false);
-⋮----
-document.addEventListener('mousedown', handleClickOutside);
-⋮----
-document.removeEventListener('mousedown', handleClickOutside);
-⋮----
-const handleKeyDown = (e) => {
-// Send message on Enter (without Shift key)
-⋮----
-e.preventDefault(); // Prevent default to avoid new line
-handleSend();
-⋮----
-const toggleDropdown = () => {
-setDropdownOpen(!dropdownOpen);
-⋮----
-const selectModel = (model) => {
-setSelectedModel(model);
-⋮----
-onChange={(e) => setInput(e.target.value)}
-⋮----
-{models.map(model => (
-⋮----
-onClick={() => selectModel(model)}
+  input,
+  setInput,
+  handleSend,
+  selectedModel,
+  setSelectedModel,
+  models = [],
+  uploadedFile,
+  onFileUpload,
+  onFileRemove,
+  onFileError,
+  fileError,
+  isUploading,
+  onModelChange,
+  isModelLoading
+}) => {
+  const textareaRef = useRef(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  // Auto-resize the textarea based on content
+  useEffect(() => {
+    if (textareaRef.current) {
+      // Reset height to auto to get the correct scrollHeight
+      textareaRef.current.style.height = 'auto';
+      
+      // Calculate new height (capped at 4 lines)
+      const lineHeight = 24; // Approximate line height in pixels
+      const maxHeight = lineHeight * 4; // Max height for 4 lines
+      const scrollHeight = textareaRef.current.scrollHeight;
+      
+      // Set the height to either the scrollHeight or maxHeight, whichever is smaller
+      textareaRef.current.style.height = `${Math.min(scrollHeight, maxHeight)}px`;
+    }
+  }, [input]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  const handleKeyDown = (e) => {
+    // Send message on Enter (without Shift key)
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault(); // Prevent default to avoid new line
+      handleSend();
+    }
+  };
+
+  const toggleDropdown = () => {
+    setDropdownOpen(!dropdownOpen);
+  };
+
+  const selectModel = (model) => {
+    if (onModelChange) {
+      onModelChange(model);
+    } else {
+      setSelectedModel(model);
+    }
+    setDropdownOpen(false);
+  };
+
+  return (
+    <div className="chat-input-container">
+      {fileError && (
+        <div className="file-error-message">
+          {fileError}
+        </div>
+      )}
+      <div className="input-row">
+        <textarea
+          ref={textareaRef}
+          className="chat-input"
+          placeholder={uploadedFile ? `Message with attached file: ${uploadedFile.name}` : "Type your message..."}
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={handleKeyDown}
+          rows="1"
+        />
+      </div>
+      <div className="input-footer">
+        <FileUpload
+          onFileUpload={onFileUpload}
+          onFileRemove={onFileRemove}
+          onError={onFileError}
+          uploadedFile={uploadedFile}
+          isUploading={isUploading}
+        />
+        <div className="spacer"></div>
+        {models.length > 0 && (
+          <div className="custom-dropdown" ref={dropdownRef}>
+            <button
+              className="dropdown-toggle"
+              onClick={toggleDropdown}
+              title="Select AI Model"
+            >
+              <span className="toggle-model-name">
+                {selectedModel && (typeof selectedModel === 'object' ? selectedModel.id : selectedModel)}
+              </span>
+              {dropdownOpen ? <FiChevronUp /> : <FiChevronDown />}
+            </button>
+            {dropdownOpen && (
+              <div className="dropdown-menu">
+                {models.map(model => {
+                  // Handle both cases: model as object or model as string
+                  const modelId = typeof model === 'object' && model.id ? model.id : model;
+                  const displayName = typeof model === 'object' && model.name ? model.name : modelId;
+                  const selectedModelId = typeof selectedModel === 'object' && selectedModel.id ?
+                    selectedModel.id : selectedModel;
+                  
+                  return (
+                    <button
+                      key={modelId}
+                      className={`dropdown-item ${modelId === selectedModelId ? 'active' : ''}`}
+                      onClick={() => selectModel(modelId)}
+                    >
+                      <div className="model-name">{displayName}</div>
+                      {typeof model === 'object' && model.size_parameters && (
+                        <div className="model-size">
+                          {(model.size_parameters / 1000000000).toFixed(1)}B params
+                          {model.quantization_level && ` (${model.quantization_level})`}
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+        <button className="send-button" onClick={handleSend}>
+          <FiSend />
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default ChatInput;
 
 ================
 File: src/components/ChatMessages.jsx
 ================
-const ChatMessages = ({ messages, chatContainerRef, isTyping, handleRetry }) => {
-const [showCopyMessage, setShowCopyMessage] = React.useState(false);
-// Add ref for the message container
-const copyMessageRef = React.useRef(null);
-⋮----
-React.useEffect(() => {
-⋮----
-// Ensure the message is visible by scrolling into view
-⋮----
-copyMessageRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-⋮----
-timeoutId = setTimeout(() => {
-setShowCopyMessage(false);
-⋮----
-return () => clearTimeout(timeoutId);
-⋮----
-const handleCopyMessage = (content) => {
-navigator.clipboard.writeText(content)
-.then(() => {
-setShowCopyMessage(true);
-console.log('Text copied to clipboard:', content);
-⋮----
-.catch(err => {
-console.error('Failed to copy text:', err);
-⋮----
-{/* Move copy message outside the scrollable container */}
-⋮----
-{messages.map((message, index) => (
-⋮----
-<div className="message-content">{getSafeMessageContent(message.content)}</div>
-⋮----
-onClick={() => handleCopyMessage(message.content)}
-⋮----
-onClick={() => handleRetry(index)}
+import React from 'react';
+import { FiCopy, FiRefreshCw, FiSquare } from 'react-icons/fi';
+import { getSafeMessageContent } from '../utils/message.jsx';
+
+const ChatMessages = ({ messages, chatContainerRef, isTyping, handleRetry, handleStopGeneration }) => {
+  const [showCopyMessage, setShowCopyMessage] = React.useState(false);
+  // Add ref for the message container
+  const copyMessageRef = React.useRef(null);
+
+  React.useEffect(() => {
+    let timeoutId;
+    if (showCopyMessage) {
+      // Ensure the message is visible by scrolling into view
+      if (copyMessageRef.current) {
+        copyMessageRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      timeoutId = setTimeout(() => {
+        setShowCopyMessage(false);
+      }, 1500);
+    }
+    return () => clearTimeout(timeoutId);
+  }, [showCopyMessage]);
+  
+  // Add event listeners for code block copy buttons
+  React.useEffect(() => {
+    const handleCodeBlockCopy = (event) => {
+      // Check if the click was on a code block's ::after pseudo-element (copy button)
+      // We can approximate this by checking if the click is in the top-right corner of a pre element
+      if (event.target.tagName === 'PRE') {
+        const rect = event.target.getBoundingClientRect();
+        const isTopRightCorner =
+          event.clientX > rect.right - 50 &&
+          event.clientX < rect.right &&
+          event.clientY > rect.top &&
+          event.clientY < rect.top + 30;
+        
+        if (isTopRightCorner) {
+          // Find the code element inside the pre
+          const codeElement = event.target.querySelector('code');
+          if (codeElement) {
+            // Copy the text content
+            navigator.clipboard.writeText(codeElement.textContent)
+              .then(() => {
+                setShowCopyMessage(true);
+                console.log('Code copied to clipboard');
+              })
+              .catch(err => {
+                console.error('Failed to copy code:', err);
+              });
+          }
+        }
+      }
+    };
+    
+    // Add the event listener to the chat container
+    const chatContainer = chatContainerRef.current;
+    if (chatContainer) {
+      chatContainer.addEventListener('click', handleCodeBlockCopy);
+    }
+    
+    // Clean up
+    return () => {
+      if (chatContainer) {
+        chatContainer.removeEventListener('click', handleCodeBlockCopy);
+      }
+    };
+  }, [chatContainerRef]);
+
+  const handleCopyMessage = (content) => {
+    navigator.clipboard.writeText(content)
+      .then(() => {
+        setShowCopyMessage(true);
+        console.log('Text copied to clipboard:', content);
+      })
+      .catch(err => {
+        console.error('Failed to copy text:', err);
+      });
+  };
+  
+  // Function removed: handleCopyMarkdown
+
+  return (
+    <>
+      {/* Move copy message outside the scrollable container */}
+      {showCopyMessage && (
+        <div className="copy-message" ref={copyMessageRef}>
+          Copied!
+        </div>
+      )}
+      
+      <div className="chat-messages" ref={chatContainerRef}>
+        {messages.map((message, index) => (
+          <div
+            key={index}
+            className={`message ${message.role === 'user' ? 'user-message' : 'assistant-message'} ${message.hasAttachment ? 'has-attachment' : ''}`}
+            data-attachment-name={message.attachmentName || ''}
+          >
+            <div className={`message-content ${!message.content.includes('\n') ? 'single-line' : ''} ${message.isStreaming ? 'streaming' : ''}`}>
+              {getSafeMessageContent(message.content, message.role === 'assistant')}
+            </div>
+            {message.role === 'assistant' && typeof message.content === 'string' && !message.isStreaming && (
+              <div className="message-actions-container">
+                <div className="message-actions">
+                  <button
+                    className="copy-button"
+                    onClick={() => handleCopyMessage(message.content)}
+                    aria-label="Copy message"
+                    title="Copy text"
+                  >
+                    <FiCopy />
+                  </button>
+                  <button
+                    className="retry-button"
+                    onClick={() => handleRetry(index)}
+                    aria-label="Retry message"
+                    title="Regenerate response"
+                  >
+                    <FiRefreshCw />
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
+        {isTyping && (
+          <div className="typing-indicator">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        )}
+      </div>
+    </>
+  );
+};
+
+export default ChatMessages;
 
 ================
 File: src/components/FileUpload.jsx
 ================
+import React, { useRef, useState } from 'react';
+import { FiPaperclip, FiX } from 'react-icons/fi';
+
 // Constants
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-⋮----
-// Document formats
-⋮----
-// Image formats
-⋮----
+const ALLOWED_FILE_TYPES = [
+  // Document formats
+  '.pdf', '.txt', '.doc', '.docx', '.csv', '.rtf', '.md',
+  // Image formats
+  '.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.svg'
+];
+
 const FileUpload = ({ onFileUpload, onFileRemove, uploadedFile, isUploading, onError }) => {
-const fileInputRef = useRef(null);
-⋮----
-const handleFileSelect = () => {
-console.log('File select button clicked');
-fileInputRef.current.click();
-⋮----
-const handleFileChange = (e) => {
-console.log('File input changed', e.target.files);
-⋮----
-console.log('File selected:', file.name, file.type, file.size);
-⋮----
-// Check file size
-⋮----
-console.log('File too large:', file.size);
-onError(`File size exceeds the 10MB limit. Your file is ${(file.size / (1024 * 1024)).toFixed(2)}MB.`);
-⋮----
-// Check file type (by extension)
-const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
-console.log('File extension:', fileExtension);
-if (!ALLOWED_FILE_TYPES.includes(fileExtension)) {
-console.log('File type not supported:', fileExtension);
-onError(`File type not supported. Allowed types: ${ALLOWED_FILE_TYPES.join(', ')}`);
-⋮----
-console.log('File passed validation, uploading...');
-onFileUpload(file);
-⋮----
-// Function to get appropriate icon based on file type
-const getFileIcon = (fileName) => {
-const extension = fileName.split('.').pop().toLowerCase();
-⋮----
-// Return appropriate icon based on file type
-⋮----
-accept={ALLOWED_FILE_TYPES.join(',')}
-⋮----
-<span className="file-icon">{getFileIcon(uploadedFile.name)}</span>
-⋮----
-? uploadedFile.name.substring(0, 12) + '...'
-⋮----
-{uploadedFile && uploadedFile.type.startsWith('image/') && (
-⋮----
-src={URL.createObjectURL(uploadedFile)}
+  const fileInputRef = useRef(null);
+  
+  const handleFileSelect = () => {
+    console.log('File select button clicked');
+    fileInputRef.current.click();
+  };
+
+  const handleFileChange = (e) => {
+    console.log('File input changed', e.target.files);
+    if (e.target.files.length > 0) {
+      const file = e.target.files[0];
+      console.log('File selected:', file.name, file.type, file.size);
+      
+      // Check file size
+      if (file.size > MAX_FILE_SIZE) {
+        console.log('File too large:', file.size);
+        onError(`File size exceeds the 10MB limit. Your file is ${(file.size / (1024 * 1024)).toFixed(2)}MB.`);
+        return;
+      }
+      
+      // Check file type (by extension)
+      const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
+      console.log('File extension:', fileExtension);
+      if (!ALLOWED_FILE_TYPES.includes(fileExtension)) {
+        console.log('File type not supported:', fileExtension);
+        onError(`File type not supported. Allowed types: ${ALLOWED_FILE_TYPES.join(', ')}`);
+        return;
+      }
+      
+      console.log('File passed validation, uploading...');
+      onFileUpload(file);
+    }
+  };
+
+  // Function to get appropriate icon based on file type
+  const getFileIcon = (fileName) => {
+    const extension = fileName.split('.').pop().toLowerCase();
+    
+    // Return appropriate icon based on file type
+    switch (extension) {
+      case 'pdf':
+        return '📄';
+      case 'doc':
+      case 'docx':
+        return '📝';
+      case 'txt':
+      case 'md':
+      case 'rtf':
+        return '📃';
+      case 'csv':
+        return '📊';
+      case 'jpg':
+      case 'jpeg':
+      case 'png':
+      case 'gif':
+      case 'webp':
+      case 'bmp':
+      case 'svg':
+        return '🖼️';
+      default:
+        return '📎';
+    }
+  };
+
+  return (
+    <div className="file-upload-container">
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        style={{ display: 'none' }}
+        accept={ALLOWED_FILE_TYPES.join(',')}
+      />
+      
+      {!uploadedFile ? (
+        <button 
+          className="file-upload-button" 
+          onClick={handleFileSelect}
+          disabled={isUploading}
+          title="Attach a file (max 10MB)"
+        >
+          <FiPaperclip />
+        </button>
+      ) : (
+        <div className="uploaded-file">
+          <span className="file-icon">{getFileIcon(uploadedFile.name)}</span>
+          <span className="file-name" title={uploadedFile.name}>
+            {uploadedFile.name.length > 15 
+              ? uploadedFile.name.substring(0, 12) + '...' 
+              : uploadedFile.name}
+          </span>
+          <button 
+            className="remove-file-button" 
+            onClick={onFileRemove}
+            title="Remove file"
+          >
+            <FiX />
+          </button>
+        </div>
+      )}
+      
+      {uploadedFile && uploadedFile.type.startsWith('image/') && (
+        <div className="image-preview">
+          <img 
+            src={URL.createObjectURL(uploadedFile)} 
+            alt="Preview" 
+            className="preview-image"
+          />
+        </div>
+      )}
+      
+      {isUploading && <span className="upload-spinner"></span>}
+    </div>
+  );
+};
+
+export default FileUpload;
 
 ================
 File: src/components/Header.jsx
 ================
-const Header = ({ handleClearChat }) => {
-⋮----
-{/* Dark background circle */}
-⋮----
-{/* Geometric pattern - inspired by the examples but simplified */}
-⋮----
-{/* Center circle */}
-⋮----
-{/* Chunky rays - 8 directions */}
-⋮----
-{/* Diagonal rays */}
-⋮----
-{/* Outer ring segments */}
+import React from 'react';
+
+const Header = ({ handleClearChat, isModelLoading, loadingModel }) => {
+  return (
+    <div className="chat-header">
+      <div className="logo-container">
+        <svg className="logo-svg" width="32" height="32" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          {/* Dark background circle */}
+          <circle cx="50" cy="50" r="48" fill="#1a1a1a" />
+          
+          {/* Geometric pattern - inspired by the examples but simplified */}
+          <g fill="#ffffff">
+            {/* Center circle */}
+            <circle cx="50" cy="50" r="8" />
+            
+            {/* Chunky rays - 8 directions */}
+            <rect x="46" y="15" width="8" height="25" />
+            <rect x="46" y="60" width="8" height="25" />
+            
+            <rect x="15" y="46" width="25" height="8" />
+            <rect x="60" y="46" width="25" height="8" />
+            
+            {/* Diagonal rays */}
+            <rect x="25" y="25" width="8" height="20" transform="rotate(-45 25 25)" />
+            <rect x="75" y="25" width="8" height="20" transform="rotate(45 75 25)" />
+            <rect x="25" y="75" width="8" height="20" transform="rotate(-135 25 75)" />
+            <rect x="75" y="75" width="8" height="20" transform="rotate(135 75 75)" />
+            
+            {/* Outer ring segments */}
+            <path d="M50 10 A40 40 0 0 1 90 50 L82 50 A32 32 0 0 0 50 18 Z" />
+            <path d="M90 50 A40 40 0 0 1 50 90 L50 82 A32 32 0 0 0 82 50 Z" />
+            <path d="M50 90 A40 40 0 0 1 10 50 L18 50 A32 32 0 0 0 50 82 Z" />
+            <path d="M10 50 A40 40 0 0 1 50 10 L50 18 A32 32 0 0 0 18 50 Z" />
+          </g>
+        </svg>
+        <h2 className="logo-text">chat<span className="logo-dot">.</span>sadoway</h2>
+      </div>
+      
+      {/* Add model loading indicator */}
+      {isModelLoading && (
+        <div className="model-loading-indicator">
+          <div className="loading-spinner"></div>
+          <span>Loading {loadingModel}...</span>
+        </div>
+      )}
+      
+      <div className="header-buttons">
+        <button className="clear-button" onClick={handleClearChat}>
+          Clear
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default Header;
 
 ================
 File: src/components/SettingsModal.jsx
 ================
-const SettingsModal = ({
-⋮----
-<div className="settings-content"> {/* Added a container for content */}
-⋮----
-<div className="input-group"> {/* Group URL input */}
-⋮----
-<input type="text" id="openWebUIUrl" name="openWebUIUrl" value={openWebUIUrl} onChange={(e) => setOpenWebUIUrl(e.target.value)} />
-⋮----
-<div className="input-group"> {/* Group API Key input */}
-⋮----
-<input type="password" id="apiKey" name="apiKey" value={apiKey} onChange={(e) => setApiKey(e.target.value)} />
-⋮----
-<div className="input-group"> {/* Group Model select */}
-⋮----
-<select id="selectedModel" name="selectedModel" value={selectedModel} onChange={(e) => setSelectedModel(e.target.value)}>
-{models.map(model => <option key={model} value={model}>{model}</option>)}
-⋮----
-<div className="button-group"> {/* Group buttons */}
-⋮----
-<button className="close-button" onClick={() => setShowSettings(false)}>Close Without Saving</button>
+import React from 'react';
 
-================
-File: src/config.json
-================
-{
-  "openWebUIUrl": "https://open.sadoway.ca",
-  "apiKey": "sk-e0519f98601c409e8336dbc292bc6c42",
-  "selectedModel": "phi4-mini:latest"
-}
+const SettingsModal = ({
+  showSettings,
+  setShowSettings,
+  openWebUIUrl,
+  setOpenWebUIUrl,
+  apiKey,
+  setApiKey,
+  selectedModel,
+  setSelectedModel,
+  models,
+  handleSaveSettings,
+  handleLoadDefaultSettings,
+}) => {
+  if (!showSettings) {
+    return null;
+  }
+
+  return (
+    <div className="settings-modal">
+      <div className="settings-content"> {/* Added a container for content */}
+        <h3>Settings</h3>
+        <form className="settings-form" onSubmit={handleSaveSettings}>
+          <div className="input-group"> {/* Group URL input */}
+            <label htmlFor="openWebUIUrl">API URL:</label>
+            <input type="text" id="openWebUIUrl" name="openWebUIUrl" value={openWebUIUrl} onChange={(e) => setOpenWebUIUrl(e.target.value)} />
+          </div>
+
+          <div className="input-group"> {/* Group API Key input */}
+            <label htmlFor="apiKey">API Key:</label>
+            <input type="password" id="apiKey" name="apiKey" value={apiKey} onChange={(e) => setApiKey(e.target.value)} />
+          </div>
+
+          <div className="input-group"> {/* Group Model select */}
+            <label htmlFor="selectedModel">Model:</label>
+            <select id="selectedModel" name="selectedModel" value={selectedModel} onChange={(e) => setSelectedModel(e.target.value)}>
+              {models && models.length > 0 ? (
+                models.map(model => {
+                  // Handle both object and string formats
+                  const modelId = typeof model === 'object' && model.id ? model.id : model;
+                  const displayName = typeof model === 'object' && model.name ? model.name : modelId;
+                  
+                  return (
+                    <option key={modelId} value={modelId}>
+                      {displayName}
+                    </option>
+                  );
+                })
+              ) : (
+                <option value="">No models available</option>
+              )}
+            </select>
+          </div>
+
+          <div className="button-group"> {/* Group buttons */}
+            <button type="button" onClick={handleLoadDefaultSettings}>Load Defaults</button>
+            <button type="submit">Save</button>
+          </div>
+        </form>
+        <button className="close-button" onClick={() => setShowSettings(false)}>Close Without Saving</button>
+      </div>
+    </div>
+  );
+};
+
+export default SettingsModal;
 
 ================
 File: src/FILE_MAP.md
@@ -1070,14 +2404,14 @@ body {
 
 
 .message {
-  padding: 6px 19px;
-  padding-bottom: 10px;
   max-width: 78%;
   clear: both;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
   transform: translateY(10px);
-
   display: block;        /* Changed back to block */
+  box-sizing: border-box;
+  overflow: hidden; /* Ensure floated children are contained */
+  line-height: 1.6; /* Increased for better readability */
 }
 
 
@@ -1087,8 +2421,8 @@ body {
   width: fit-content;    /* Fit content width */
   min-width: 40%;
   margin-right: 16px;
-  padding-top: 20px;
-  align-self: inline-flex;
+  padding: 11px 16px 16px 25px;
+  align-self: flex-end; /* Ensure it stays on the right */
   margin-top: 8px;
   margin-bottom: 16px;
   font-size: 1.1rem;
@@ -1106,6 +2440,8 @@ body {
   transition: box-shadow 0.2s ease, transform 0.2s ease;
   position: relative;
   overflow: hidden;
+  float: right; /* Ensure it stays on the right */
+  line-height: normal; /* Reset line height */
 }
 
 /* Removed blue dot as requested */
@@ -1131,12 +2467,12 @@ body {
 
 .assistant-message {
   background-color: #f2f2f2;
-  padding-top: 20px;
+  padding: 18px 26px 0px 26px;
   align-self: flex-start;
   color: rgba(0, 0, 0, 0.85); /* Slightly softer than pure black */
-  margin-left: 16px;
+  margin-left: 30px;
   margin-top: 5px;
-  margin-bottom: 55px; /* Further increased to provide more space for the action buttons */
+  margin-bottom: 25px; /* Further increased to provide more space for the action buttons */
   font-size: 1.1rem;
   border-radius: 4px 18px 18px 18px; /* Asymmetric corners for character */
   position: relative;
@@ -1152,6 +2488,9 @@ body {
   background-image:
     linear-gradient(to bottom right, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0));
   overflow: hidden;
+  float: left; /* Ensure it stays on the left */
+  width: fit-content; /* Fit content width */
+  line-height: normal; /* Reset line height */
 }
 
 .assistant-message::before {
@@ -1190,12 +2529,75 @@ body {
 .message-content {
   word-wrap: break-word;
   white-space: pre-line;
-  margin-bottom: 0.7rem;
-  line-height: 1.5; /* Improved line height for readability */
-  padding: 0 2px; /* Slight padding for better text spacing */
+  margin: 0; /* Remove all margins */
+  line-height: 1.6; /* Increased for better readability */
+  padding: 0; /* Remove padding to fix spacing */
   text-rendering: optimizeLegibility; /* Better text rendering */
   -webkit-font-smoothing: antialiased; /* Smoother fonts on webkit browsers */
   -moz-osx-font-smoothing: grayscale; /* Smoother fonts on Firefox */
+  display: block; /* Change to block */
+  height: auto; /* Auto height */
+  padding: 15px 26px -50px 26px;
+  min-height: 0; /* No minimum height */
+}
+
+/* Fix spacing in markdown content */
+.markdown-content {
+  line-height: 1.6; /* Increased for better readability */
+  margin: 0;
+  padding: 0;
+  display: inline; /* Change to inline */
+  width: auto; /* Auto width */
+  height: auto; /* Auto height */
+  min-height: 0; /* No minimum height */
+}
+
+/* Remove ALL margins and padding from all elements */
+.markdown-content * {
+  margin: 0 !important;
+  padding: 0 !important;
+  line-height: 1.6 !important; /* Increased for better readability */
+}
+
+/* Add spacing only between paragraphs */
+.markdown-content p + p {
+  margin-top: 0.8em !important; /* Increased for better readability */
+}
+
+/* Ensure no bottom margin or padding on any element */
+.markdown-content > *:last-child {
+  margin-bottom: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+/* Special styling for single-line messages */
+.single-line {
+  padding: 0 !important;
+  margin: 0 !important;
+  line-height: 1.6 !important; /* Increased for better readability */
+  height: auto !important;
+  min-height: 0 !important;
+}
+
+.single-line .markdown-content,
+.single-line .user-content {
+  display: inline !important;
+  line-height: 1.6 !important; /* Increased for better readability */
+}
+
+/* User content styling */
+.user-content {
+  white-space: pre-line;
+  line-height: 1.6; /* Increased for better readability */
+  margin: 0;
+  padding: 0;
+}
+
+/* Adjust padding for messages with single-line content */
+.user-message .single-line,
+.assistant-message .single-line {
+  padding: 0 !important;
+  margin: 0 !important;
 }
 
 .message-actions-container {
@@ -1326,6 +2728,73 @@ body {
   overflow: hidden;
 }
 
+/* Floating stop generation button */
+.stop-generation-floating {
+  position: fixed;
+  bottom: 90px; /* Position above the chat input */
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  width: auto;
+  display: flex;
+  justify-content: center;
+  animation: fadeInUp 0.3s ease-out;
+}
+
+.stop-button-floating {
+  background-color: rgba(60, 60, 60, 0.8);
+  color: #f0f0f0;
+  border: none;
+  border-radius: 16px;
+  cursor: pointer;
+  padding: 6px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.stop-button-floating:hover {
+  background-color: rgba(80, 80, 80, 0.9);
+  transform: translateY(-1px);
+}
+
+.stop-button-floating:active {
+  transform: translateY(0);
+}
+
+.stop-button-floating svg {
+  font-size: 1rem;
+  color: #ff9800;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 10px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+/* Mobile adjustments for stop button */
+@media (max-width: 768px) {
+  .stop-generation-floating {
+    bottom: 100px; /* Position higher on mobile */
+  }
+  
+  .stop-button-floating {
+    padding: 6px 14px;
+    font-size: 0.9rem;
+  }
+}
+
 .copy-button {
   background-color: rgba(255, 255, 255, 0.9);
 }
@@ -1425,7 +2894,7 @@ body {
   justify-content: center;
   margin: 16px auto 60px; /* Increased bottom margin to avoid being covered by input */
   animation: slideIn 0.5s ease forwards;
-  opacity: 0; /* Start hidden */
+  opacity: 1; /* Make it visible immediately */
   width: 70px;
   height: 24px;
   padding: 0 8px;
@@ -1433,17 +2902,22 @@ body {
   background: rgba(42, 42, 42, 0.8);
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(4px);
-  z-index: 10; /* Ensure it appears above other elements */
+  z-index: 1000; /* Higher z-index to ensure it appears above other elements */
+  clear: both; /* Ensure it appears below floated messages */
 }
 
 @keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
+  0% {
+    opacity: 0.5;
+    transform: translateY(10px) scale(0.9);
   }
-  to {
+  50% {
+    opacity: 0.8;
+    transform: translateY(5px) scale(0.95);
+  }
+  100% {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
   }
 }
 
@@ -1477,13 +2951,14 @@ body {
 .typing-indicator span {
   position: relative;
   display: inline-block;
-  width: 6px;
-  height: 6px;
+  width: 8px; /* Larger dots */
+  height: 8px;
   border-radius: 50%;
   background: #ffffff;
-  margin: 0 3px;
+  margin: 0 4px; /* More space between dots */
   transform: translateY(0);
   z-index: 1;
+  box-shadow: 0 0 5px rgba(255, 255, 255, 0.5); /* Add glow effect */
 }
 
 /* First dot animation */
@@ -1503,12 +2978,15 @@ body {
 
 @keyframes bounce {
   0%, 100% {
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
     background: #ffffff;
+    opacity: 0.8;
   }
   50% {
-    transform: translateY(-5px);
+    transform: translateY(-7px) scale(1.2); /* More pronounced bounce */
     background: #ff9800;
+    opacity: 1;
+    box-shadow: 0 0 8px rgba(255, 152, 0, 0.8); /* Stronger glow at peak */
   }
 }
 
@@ -1632,6 +3110,13 @@ body {
     height: 28px;
 }
 
+.toggle-model-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 140px;
+}
+
 .dropdown-toggle:hover {
     background-color: rgba(255, 255, 255, 0.1);
 }
@@ -1646,7 +3131,10 @@ body {
     box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
     z-index: 110; /* Increased to be higher than send button (101) */
     min-width: 290px;
-    overflow: hidden;
+    max-width: 350px;
+    max-height: 400px;
+    overflow-y: auto;
+    overflow-x: hidden;
     padding: 6px;
 }
 
@@ -1676,6 +3164,33 @@ body {
 .dropdown-item.active {
     background-color: #3a3a3a;
     font-weight: 500;
+}
+
+/* Model info styles */
+.model-name {
+    font-weight: 600;
+    font-size: 1rem;
+    color: #fff;
+    margin-bottom: 4px;
+}
+
+.model-size {
+    font-size: 0.8rem;
+    color: #aaa;
+    opacity: 0.9;
+}
+
+.dropdown-item {
+    text-align: left;
+    padding: 10px 16px;
+}
+
+.dropdown-item:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.dropdown-item.active {
+    background-color: rgba(255, 255, 255, 0.15);
 }
 
 /* Adjust chat input container padding for the footer */
@@ -2542,10 +4057,323 @@ body {
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
 }
 
+/* Markdown Content Styles */
+.markdown-content {
+  line-height: 1.5; /* Slightly reduced line height */
+  color: inherit;
+  font-family: inherit;
+  padding: 0; /* Remove padding from container */
+  margin: 0; /* Remove margin */
+  max-width: 100%; /* Full width */
+  word-break: break-word; /* Break long words if needed */
+  overflow-wrap: break-word; /* Ensure words wrap properly */
+}
+
+/* Override default markdown styling to add proper padding */
+.assistant-message .markdown-content {
+  display: block !important; /* Force block display */
+  padding: 0 !important; /* Remove padding from container */
+  margin: 0 !important; /* Remove margin */
+  width: 100% !important; /* Full width */
+}
+
+/* Headings */
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3,
+.markdown-content h4,
+.markdown-content h5,
+.markdown-content h6 {
+  margin-top: 0.4em; /* Further reduced from 0.6em */
+  margin-bottom: 0.2em; /* Further reduced from 0.3em */
+  font-weight: 600;
+  color: inherit;
+  line-height: 1.2; /* Reduced from 1.3 */
+  border-bottom: none;
+}
+
+.markdown-content h1 {
+  font-size: 1.4em;
+  padding-bottom: 0.2em;
+}
+
+.markdown-content h2 {
+  font-size: 1.3em;
+  padding-bottom: 0.2em;
+}
+
+.markdown-content h3 {
+  font-size: 1.2em;
+}
+
+.markdown-content h4,
+.markdown-content h5,
+.markdown-content h6 {
+  font-size: 1.1em;
+}
+
+/* Paragraphs and lists */
+.markdown-content p {
+  margin-bottom: 0.3em; /* Further reduced from 0.5em */
+  margin-top: 0.3em; /* Added top margin */
+  padding-left: 0.5em; /* Add left padding */
+  padding-right: 0.5em; /* Add right padding */
+}
+
+.markdown-content ul,
+.markdown-content ol {
+  margin-left: 2em; /* Increased from 1.2em */
+  margin-right: 1em; /* Added right margin */
+  margin-bottom: 0.3em; /* Further reduced from 0.5em */
+  margin-top: 0.3em; /* Reduced from 0.5em */
+  padding-left: 0.5em; /* Add left padding */
+  padding-right: 0.5em; /* Add right padding */
+}
+
+.markdown-content li {
+  margin-bottom: 0.1em; /* Further reduced from 0.2em */
+  padding-right: 0.5em; /* Add right padding */
+  padding-left: 0.5em; /* Add left padding */
+}
+
+/* Ensure lists have proper indentation */
+.assistant-message .markdown-content ul,
+.assistant-message .markdown-content ol {
+  margin-left: 2em !important;
+  margin-right: 1em !important;
+  padding-left: 0.5em !important;
+  padding-right: 0.5em !important;
+}
+
+.assistant-message .markdown-content li {
+  padding-left: 0.5em !important;
+  padding-right: 0.5em !important;
+}
+
+.markdown-content li p {
+  margin: 0;
+}
+
+/* Code blocks and inline code */
+.markdown-content code {
+  font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+  background-color: rgba(0, 0, 0, 0.2);
+  color: #ff9800;
+  padding: 0.1em 0.3em;
+  border-radius: 3px;
+  font-size: 0.9em;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  margin: 0 2px; /* Add margin to prevent touching edge */
+}
+
+.markdown-content pre {
+  background-color: rgba(0, 0, 0, 0.2);
+  padding: 0.8em; /* Increased padding */
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.5em 0; /* Reduced vertical margin */
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative; /* For positioning the copy button */
+  width: calc(100% - 16px) !important; /* Set width with padding in mind */
+  max-width: calc(100% - 16px) !important; /* Ensure it doesn't overflow */
+}
+
+/* Ensure code blocks have proper padding and don't touch edges */
+.assistant-message .markdown-content pre {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  width: calc(100% - 16px) !important;
+  max-width: calc(100% - 16px) !important;
+}
+
+/* Add copy button for code blocks */
+.markdown-content pre::after {
+  content: "Copy";
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background-color: rgba(42, 42, 42, 0.9);
+  color: #ff9800;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.8em;
+  cursor: pointer;
+  border: 1px solid rgba(255, 152, 0, 0.3);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.markdown-content pre:hover::after {
+  opacity: 0.8;
+}
+
+.markdown-content pre::after:hover {
+  opacity: 1;
+  background-color: rgba(60, 60, 60, 0.9);
+}
+
+.markdown-content pre code {
+  background-color: transparent;
+  padding: 0;
+  border: none;
+  color: #e0e0e0;
+  font-size: 0.9em;
+  line-height: 1.5;
+}
+
+/* Blockquotes */
+.markdown-content blockquote {
+  border-left: 3px solid rgba(255, 152, 0, 0.5);
+  padding: 0.3em 1em 0.3em 1em; /* Increased padding all around */
+  margin: 0.8em 1em; /* Added horizontal margin */
+  color: rgba(255, 255, 255, 0.8);
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 0 4px 4px 0;
+  width: calc(100% - 4em) !important; /* Set width with padding and margin in mind */
+}
+
+/* Ensure blockquotes have proper padding */
+.assistant-message .markdown-content blockquote {
+  margin-left: 1em !important;
+  margin-right: 1em !important;
+  padding: 0.3em 1em 0.3em 1em !important;
+}
+
+/* Links */
+.markdown-content a {
+  color: #ff9800;
+  text-decoration: none;
+  border-bottom: 1px dotted rgba(255, 152, 0, 0.5);
+}
+
+.markdown-content a:hover {
+  text-decoration: none;
+  border-bottom: 1px solid #ff9800;
+}
+
+/* Images */
+.markdown-content img {
+  max-width: 100%;
+  border-radius: 6px;
+  margin: 0.8em 0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Tables */
+.markdown-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8em 0;
+  font-size: 0.9em;
+}
+
+.markdown-content table th,
+.markdown-content table td {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.4em 0.6em;
+}
+
+.markdown-content table th {
+  background-color: rgba(0, 0, 0, 0.2);
+  font-weight: 600;
+}
+
+.markdown-content table tr {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.markdown-content table tr:nth-child(2n) {
+  background-color: rgba(0, 0, 0, 0.15);
+}
+
+/* Horizontal rule */
+.markdown-content hr {
+  height: 1px;
+  border: none;
+  background-color: rgba(255, 255, 255, 0.1);
+  margin: 1em 0;
+}
+
+/* Inline elements */
+.markdown-content strong {
+  font-weight: 600;
+}
+
+.markdown-content em {
+  font-style: italic;
+}
+
+/* Fix for code blocks in lists */
+.markdown-content li pre {
+  margin-top: 0.5em;
+}
+
+/* Streaming text animation */
+.streaming {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0.7; }
+  to { opacity: 1; }
+}
+/* Add a subtle highlight to the last character in streaming text */
+.streaming::after {
+  content: '';
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  background-color: rgba(255, 152, 0, 0.5);
+  margin-left: 1px;
+  vertical-align: text-bottom;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.2; }
+  50% { opacity: 0.8; }
+}
+
+/* Model loading indicator */
+.model-loading-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: rgba(255, 152, 0, 0.15);
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 0.9rem;
+  color: #f0f0f0;
+  margin-right: 12px;
+}
+
+.loading-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid #ff9800;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 ================
 File: src/main.jsx
 ================
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App.jsx';
+import './index.css';
+
 ReactDOM.createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>,
+)
 
 ================
 File: src/utils/config.js
@@ -2561,16 +4389,96 @@ File: src/utils/config.js
  *
  * For an overview of all project files, see `src/FILE_MAP.md`.
  */
-⋮----
+
+// Default fallback config
+const defaultConfig = {
+  openWebUIUrl: "https://open.sadoway.ca",
+  apiKey: "sk-e0519f98601c409e8336dbc292bc6c42",
+  selectedModel: "phi4-mini:latest"
+};
+
+// Cache for the loaded config
+let configCache = null;
+
+/**
+ * Loads the configuration from the config.json file.
+ * Uses a cache-busting query parameter to ensure the latest config is loaded.
+ * Falls back to default values if the config file cannot be loaded.
+ */
+export const loadConfig = async () => {
+  if (configCache) return configCache;
+  
+  try {
+    // Add cache-busting query parameter
+    const response = await fetch('/config.json?t=' + new Date().getTime());
+    if (!response.ok) throw new Error('Failed to load config');
+    
+    configCache = await response.json();
+    console.log('Loaded config from file:', configCache);
+    return configCache;
+  } catch (error) {
+    console.error('Error loading config:', error);
+    // Fallback to default config
+    return defaultConfig;
+  }
+};
+
+/**
+ * Gets the default settings.
+ * This is a synchronous function that returns the cached config or default values.
+ * For asynchronous loading, use loadConfig() instead.
+ */
 export const getDefaultSettings = () => {
-console.log('Default settings loaded:', config);
+  if (configCache) {
+    console.log('Returning cached config:', configCache);
+    return configCache;
+  }
+  
+  console.log('No cached config available, returning default values');
+  return defaultConfig;
+};
 
 ================
 File: src/utils/error.js
 ================
 export const handleApiError = (error, source) => {
-console.error(`API Error in ${source}:`, error);
-// Consider adding more robust error handling here, such as displaying a user-friendly error message.
+  console.error(`API Error in ${source}:`, error);
+
+  // Extract status code and response text if available
+  let statusCode = error.status || (error.response && error.response.status);
+  let errorMessage = error.message || 'Unknown error occurred';
+
+  // Handle specific error cases
+  if (statusCode === 401) {
+    errorMessage = 'Authentication failed. Please check your API key in settings.';
+  } else if (statusCode === 403) {
+    errorMessage = 'Access denied. Please verify your API key has the correct permissions.';
+  } else if (statusCode === 404) {
+    errorMessage = 'The requested resource was not found. Please check the API URL in settings.';
+  } else if (statusCode >= 500) {
+    errorMessage = 'Server error occurred. Please try again later.';
+  }
+
+  // If the error message contains a response text, use that instead
+  if (error.message && error.message.includes('response text')) {
+    try {
+      const responseText = error.message.split('response text:')[1].trim();
+      const parsedResponse = JSON.parse(responseText);
+      if (parsedResponse.error) {
+        errorMessage = parsedResponse.error;
+      }
+    } catch (e) {
+      // If we can't parse the response text, stick with the original error message
+      console.warn('Could not parse error response:', e);
+    }
+  }
+
+  return {
+    statusCode,
+    message: errorMessage,
+    originalError: error
+  };
+};
 
 ================
 File: src/utils/message.js
@@ -2581,36 +4489,105 @@ File: src/utils/message.js
  *
  * For an overview of all project files, see `src/FILE_MAP.md`.
  */
-⋮----
+
 export const getSafeMessageContent = (content) => {
-⋮----
-const stringContent = JSON.stringify(content, null, 2); // Format for readability
-⋮----
-console.error("Error stringifying message content:", error);
-⋮----
-} else if (content) { // Check if content is not null or undefined but not a string or object
-return <span>{String(content)}</span>;
-⋮----
-return null; // Or a placeholder like <span>No content</span>
+  if (typeof content === 'string') {
+    return <span dangerouslySetInnerHTML={{ __html: content }} />;
+  } else if (typeof content === 'object') {
+    try {
+      const stringContent = JSON.stringify(content, null, 2); // Format for readability
+      return <pre>{stringContent}</pre>;
+    } catch (error) {
+      console.error("Error stringifying message content:", error);
+      return <span>Error displaying message content.</span>;
+    }
+  } else if (content) { // Check if content is not null or undefined but not a string or object
+    return <span>{String(content)}</span>;
+  } else {
+    return null; // Or a placeholder like <span>No content</span>
+  }
+};
 
 ================
 File: src/utils/message.jsx
 ================
-export const getSafeMessageContent = (content) => { // Ensure getSafeMessageContent is exported
-⋮----
-const stringContent = JSON.stringify(content, null, 2);
-⋮----
-console.error("Error stringifying message content:", error);
-⋮----
-return <span>{String(content)}</span>;
+import React from 'react';
+import { marked } from 'marked';
+
+// Configure marked for safe rendering
+marked.setOptions({
+  breaks: true,  // Convert \n to <br>
+  gfm: true,     // GitHub Flavored Markdown
+  headerIds: false,
+  mangle: false,
+  sanitize: false
+});
+
+export const getSafeMessageContent = (content, isAssistant = false) => { // Ensure getSafeMessageContent is exported
+  if (typeof content === 'string') {
+    // Trim whitespace from the beginning and end of the content
+    const trimmedContent = content.trim();
+    
+    // Remove extra blank lines (more than one consecutive newline)
+    const normalizedContent = trimmedContent.replace(/\n{3,}/g, '\n\n');
+    
+    // Only render markdown for assistant messages
+    if (isAssistant) {
+      // Render markdown and return as HTML
+      return <div dangerouslySetInnerHTML={{ __html: marked(normalizedContent) }} className="markdown-content" />;
+    } else {
+      // For user messages, just return the text without markdown
+      return <div className="user-content">{normalizedContent}</div>;
+    }
+  } else if (typeof content === 'object') {
+    try {
+      const stringContent = JSON.stringify(content, null, 2);
+      // Render as code block only for assistant messages
+      if (isAssistant) {
+        return <div dangerouslySetInnerHTML={{ __html: marked('```json\n' + stringContent + '\n```') }} className="markdown-content" />;
+      } else {
+        return <div className="user-content"><pre>{stringContent}</pre></div>;
+      }
+    } catch (error) {
+      console.error("Error stringifying message content:", error);
+      return <span>Error displaying message content.</span>;
+    }
+  } else if (content) {
+    return <span>{String(content).trim()}</span>;
+  } else {
+    return null;
+  }
+};
 
 ================
 File: vite.config.js
 ================
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
 export default defineConfig({
-plugins: [react()],
-⋮----
-allowedHosts: ['chat.sadoway.ca']  // Replace with your domain
+  plugins: [react()],
+  preview: {
+    host: '0.0.0.0',
+    port: 4173,
+    strictPort: true,
+    allowedHosts: ['chat.sadoway.ca']  // Replace with your domain
+  },
+  server: {
+    host: '0.0.0.0',
+    port: 4173,
+    strictPort: true,
+    allowedHosts: ['chat.sadoway.ca']  // Replace with your domain
+  },
+  build: {
+    minify: 'esbuild'
+  },
+  optimizeDeps: {
+    esbuildOptions: {
+      target: 'esnext'
+    }
+  }
+})
 
 
 
